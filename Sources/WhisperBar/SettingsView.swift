@@ -59,8 +59,13 @@ struct SettingsView: View {
                 }
                 .disabled(!model.hasAPIKey)
             }
-            SecureField("sk-...", text: $model.apiKeyDraft)
+            TextField("sk-...", text: $model.apiKeyDraft)
                 .textFieldStyle(.roundedBorder)
+                .textContentType(.password)
+                .disableAutocorrection(true)
+                .onSubmit {
+                    model.saveAPIKey()
+                }
             Button("Save Key") {
                 model.saveAPIKey()
             }
