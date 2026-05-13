@@ -5,31 +5,27 @@ import SwiftUI
 final class PillWindowController {
     private let panel: NSPanel
     private let model: AppModel
-    private var lastDragTranslation: CGSize = .zero
     private var hasCustomPosition = false
 
     init(model: AppModel) {
         self.model = model
         let panel = NSPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 520, height: 138),
+            contentRect: NSRect(x: 0, y: 0, width: 584, height: 172),
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: false
         )
         panel.isOpaque = false
         panel.backgroundColor = .clear
-        panel.hasShadow = true
+        panel.hasShadow = false
         panel.level = .floating
-        panel.isMovableByWindowBackground = true
+        panel.isMovableByWindowBackground = false
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .transient]
         self.panel = panel
-        panel.contentView = NSHostingView(rootView: DictationPillView(
+        panel.contentView = TransparentHostingView(rootView: DictationPillView(
             model: model,
-            onDragChanged: { [weak self] translation in
-                self?.dragChanged(translation)
-            },
-            onDragEnded: { [weak self] in
-                self?.lastDragTranslation = .zero
+            onDragStarted: { [weak self] in
+                self?.hasCustomPosition = true
             }
         ))
     }
@@ -54,52 +50,29 @@ final class PillWindowController {
         panel.setFrameOrigin(NSPoint(x: x, y: y))
     }
 
-    private func dragChanged(_ translation: CGSize) {
-        hasCustomPosition = true
-        let delta = CGSize(
-            width: translation.width - lastDragTranslation.width,
-            height: translation.height - lastDragTranslation.height
-        )
-        lastDragTranslation = translation
-        let origin = panel.frame.origin
-        panel.setFrameOrigin(NSPoint(x: origin.x + delta.width, y: origin.y - delta.height))
-    }
 }
 
 struct DictationPillView: View {
     @ObservedObject var model: AppModel
-    var onDragChanged: (CGSize) -> Void
-    var onDragEnded: () -> Void
+    var onDragStarted: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 12) {
-                LiveAudioBars(level: model.audioLevel, isActive: model.isRecording)
-                    .frame(width: 46, height: 22)
+            ZStack {
+                HStack(spacing: 12) {
+                    LiveAudioBars(level: model.audioLevel, isActive: model.isRecording)
+                        .frame(width: 48, height: 24)
 
-                Text(model.isRecording ? "Listening" : "Finishing")
-                    .font(.system(size: 13, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.primary)
+                    Text(model.isRecording ? "Listening" : "Finishing")
+                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.primary)
 
-                Spacer()
+                    Spacer()
+                }
 
-                Text("Ctrl Opt Space")
-                    .font(.system(size: 11, weight: .medium, design: .rounded))
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(.quaternary, in: Capsule())
+                WindowDragHandle(onDragStarted: onDragStarted)
             }
-            .contentShape(Rectangle())
-            .gesture(
-                DragGesture(minimumDistance: 2)
-                    .onChanged { value in
-                        onDragChanged(value.translation)
-                    }
-                    .onEnded { _ in
-                        onDragEnded()
-                    }
-            )
+            .frame(height: 24)
 
             TranscriptTextView(text: model.liveTranscript)
                 .frame(height: 78)
@@ -108,12 +81,16 @@ struct DictationPillView: View {
         .padding(.horizontal, 18)
         .padding(.vertical, 14)
         .frame(width: 560, height: 148)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .background {
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .shadow(color: .black.opacity(0.26), radius: 18, x: 0, y: 12)
+        }
         .overlay {
             RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .strokeBorder(.white.opacity(0.16))
         }
-        .shadow(color: .black.opacity(0.24), radius: 18, x: 0, y: 12)
+        .padding(12)
     }
 }
 
@@ -124,16 +101,62 @@ struct LiveAudioBars: View {
     private let bars = 7
 
     var body: some View {
-        HStack(alignment: .center, spacing: 3) {
-            ForEach(0..<bars, id: \.self) { index in
-                let distance = abs(Double(index) - Double(bars - 1) / 2)
-                let response = max(0.18, level * (1.14 - distance * 0.13))
-                RoundedRectangle(cornerRadius: 2, style: .continuous)
-                    .fill(isActive ? Color.accentColor.opacity(0.95) : Color.secondary.opacity(0.32))
-                    .frame(width: 4, height: 4 + response * 18)
-                    .animation(.interactiveSpring(response: 0.18, dampingFraction: 0.76), value: level)
+        TimelineView(.animation(minimumInterval: 1 / 24)) { timeline in
+            let time = timeline.date.timeIntervalSinceReferenceDate
+            let energy = isActive ? min(1, pow(max(level, 0.035) * 2.4, 0.58)) : 0
+
+            HStack(alignment: .center, spacing: 3) {
+                ForEach(0..<bars, id: \.self) { index in
+                    let phase = time * 7.5 + Double(index) * 0.82
+                    let wave = (sin(phase) + 1) / 2
+                    let centerBias = 1 - abs(Double(index) - Double(bars - 1) / 2) * 0.08
+                    let height = isActive ? 5 + energy * centerBias * (7 + wave * 14) : 5
+
+                    RoundedRectangle(cornerRadius: 2, style: .continuous)
+                        .fill(isActive ? Color.accentColor.opacity(0.95) : Color.secondary.opacity(0.32))
+                        .frame(width: 4, height: height)
+                        .animation(.easeOut(duration: 0.08), value: level)
+                }
             }
         }
+    }
+}
+
+final class TransparentHostingView<Content: View>: NSHostingView<Content> {
+    override var isOpaque: Bool { false }
+
+    required init(rootView: Content) {
+        super.init(rootView: rootView)
+        wantsLayer = true
+        layer?.backgroundColor = NSColor.clear.cgColor
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+}
+
+struct WindowDragHandle: NSViewRepresentable {
+    var onDragStarted: () -> Void
+
+    func makeNSView(context: Context) -> DragHandleView {
+        let view = DragHandleView()
+        view.onDragStarted = onDragStarted
+        return view
+    }
+
+    func updateNSView(_ nsView: DragHandleView, context: Context) {
+        nsView.onDragStarted = onDragStarted
+    }
+}
+
+final class DragHandleView: NSView {
+    var onDragStarted: (() -> Void)?
+
+    override func mouseDown(with event: NSEvent) {
+        onDragStarted?()
+        window?.performDrag(with: event)
     }
 }
 

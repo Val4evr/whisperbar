@@ -9,6 +9,6 @@ struct ClipboardPlanTests {
     }
 
     @Test func hasHistoryFriendlyDefaultDelay() {
-        #expect(ClipboardRestorePlan(dictatedText: "Hello").restoreDelayNanoseconds == 650_000_000)
+        #expect(ClipboardRestorePlan(dictatedText: "Hello").restoreDelayNanoseconds == 1_250_000_000)
     }
 }
