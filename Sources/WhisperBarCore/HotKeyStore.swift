@@ -14,6 +14,10 @@ public final class HotKeyStore: @unchecked Sendable {
         else {
             return .defaultToggle
         }
+        if decoded == .legacyHelpMenuToggle {
+            save(.defaultToggle)
+            return .defaultToggle
+        }
         return decoded
     }
 

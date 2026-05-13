@@ -14,7 +14,7 @@ The app stores your OpenAI API key in macOS Keychain. The app bundle includes mi
 
 ## Default Hotkey
 
-The default toggle is `Command + Right Shift + /`. The right-shift distinction is handled with a global event tap, which requires Accessibility permission.
+The default toggle is `Control + Option + Space`. Global hotkey handling requires Accessibility permission.
 
 ## Notes
 

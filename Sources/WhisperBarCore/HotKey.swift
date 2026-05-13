@@ -19,6 +19,12 @@ public struct HotKey: Codable, Equatable, Sendable {
     }
 
     public static let defaultToggle = HotKey(
+        keyCode: Int64(kVK_Space),
+        carbonModifiers: UInt32(controlKey | optionKey),
+        shiftSide: .any
+    )
+
+    public static let legacyHelpMenuToggle = HotKey(
         keyCode: Int64(kVK_ANSI_Slash),
         carbonModifiers: UInt32(cmdKey | shiftKey),
         shiftSide: .right
