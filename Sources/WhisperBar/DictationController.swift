@@ -37,11 +37,12 @@ final class DictationController: NSObject {
         guard !model.isRecording else { return }
         guard AXIsProcessTrusted() else {
             model.lastError = "Accessibility permission is required for the global hotkey and paste."
-            model.requestAccessibilityPermission()
+            AppLogger.shared.error(model.lastError ?? "Accessibility permission missing")
             return
         }
         guard AVCaptureDevice.authorizationStatus(for: .audio) == .authorized else {
             model.lastError = "Microphone permission is required."
+            AppLogger.shared.error(model.lastError ?? "Microphone permission missing")
             model.requestMicrophonePermission()
             return
         }
@@ -49,6 +50,7 @@ final class DictationController: NSObject {
         do {
             guard let apiKey = try model.readAPIKey(), APIKeyValidator.looksValid(apiKey) else {
                 model.lastError = "Add your OpenAI API key first."
+                AppLogger.shared.error(model.lastError ?? "Missing API key")
                 return
             }
 
@@ -70,12 +72,14 @@ final class DictationController: NSObject {
             model.statusText = "Listening"
         } catch {
             model.lastError = error.localizedDescription
+            AppLogger.shared.error("Failed to start dictation: \(error.localizedDescription)")
             cancel()
         }
     }
 
     private func stopDictation() {
         guard model.isRecording else { return }
+        AppLogger.shared.info("Stopping dictation")
         model.isRecording = false
         model.statusText = "Finishing"
         audioCapture.stop()
@@ -123,6 +127,7 @@ extension DictationController: RealtimeTranscriptionClientDelegate {
                 }
             case .error(let message):
                 self.model.lastError = message
+                AppLogger.shared.error("Realtime API error: \(message)")
                 self.model.statusText = "Error"
             case .sessionCreated, .sessionUpdated:
                 if self.model.isRecording {
@@ -137,6 +142,7 @@ extension DictationController: RealtimeTranscriptionClientDelegate {
     nonisolated func realtimeClient(_ client: RealtimeTranscriptionClient, didFail error: Error) {
         Task { @MainActor [weak self] in
             self?.model.lastError = error.localizedDescription
+            AppLogger.shared.error("Realtime client failed: \(error.localizedDescription)")
             self?.model.statusText = "Error"
         }
     }

@@ -17,6 +17,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             Task { @MainActor in
                 dictationController.toggleDictation()
             }
+        } onStatusChange: { status in
+            Task { @MainActor in
+                appModel.hotKeyStatusText = status
+            }
         }
 
         appModel.dictationController = dictationController

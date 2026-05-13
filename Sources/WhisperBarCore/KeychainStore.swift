@@ -31,21 +31,30 @@ public final class KeychainAPIKeyStore: APIKeyStoring, @unchecked Sendable {
     }
 
     public func readAPIKey() throws -> String? {
+        AppLogger.shared.info("Reading API key from Keychain")
         var query = baseQuery()
         query[kSecReturnData as String] = true
         query[kSecMatchLimit as String] = kSecMatchLimitOne
 
         var item: CFTypeRef?
         let status = SecItemCopyMatching(query as CFDictionary, &item)
-        if status == errSecItemNotFound { return nil }
-        guard status == errSecSuccess else { throw KeychainStoreError.unexpectedStatus(status) }
+        if status == errSecItemNotFound {
+            AppLogger.shared.info("No API key found in Keychain")
+            return nil
+        }
+        guard status == errSecSuccess else {
+            AppLogger.shared.error("Keychain read failed with status \(status)")
+            throw KeychainStoreError.unexpectedStatus(status)
+        }
         guard let data = item as? Data, let value = String(data: data, encoding: .utf8) else {
+            AppLogger.shared.error("Keychain read returned invalid data")
             throw KeychainStoreError.invalidData
         }
         return value
     }
 
     public func saveAPIKey(_ value: String) throws {
+        AppLogger.shared.info("Saving API key to Keychain")
         let normalized = APIKeyValidator.normalized(value)
         let data = Data(normalized.utf8)
         var query = baseQuery()
@@ -56,6 +65,7 @@ public final class KeychainAPIKeyStore: APIKeyStoring, @unchecked Sendable {
         let status = SecItemUpdate(query as CFDictionary, update as CFDictionary)
         if status == errSecSuccess { return }
         if status != errSecItemNotFound {
+            AppLogger.shared.error("Keychain update failed with status \(status)")
             throw KeychainStoreError.unexpectedStatus(status)
         }
 
@@ -63,6 +73,7 @@ public final class KeychainAPIKeyStore: APIKeyStoring, @unchecked Sendable {
         query[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
         let addStatus = SecItemAdd(query as CFDictionary, nil)
         guard addStatus == errSecSuccess else {
+            AppLogger.shared.error("Keychain add failed with status \(addStatus)")
             throw KeychainStoreError.unexpectedStatus(addStatus)
         }
     }

@@ -6,13 +6,19 @@ import WhisperBarCore
 final class GlobalHotKeyMonitor {
     private var hotKey: HotKey
     private let onTrigger: @MainActor () -> Void
+    private let onStatusChange: @MainActor (String) -> Void
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
     private var rightShiftDown = false
 
-    init(hotKey: HotKey, onTrigger: @escaping @MainActor () -> Void) {
+    init(
+        hotKey: HotKey,
+        onTrigger: @escaping @MainActor () -> Void,
+        onStatusChange: @escaping @MainActor (String) -> Void
+    ) {
         self.hotKey = hotKey
         self.onTrigger = onTrigger
+        self.onStatusChange = onStatusChange
     }
 
     func update(hotKey: HotKey) {
@@ -21,6 +27,11 @@ final class GlobalHotKeyMonitor {
 
     func start() {
         guard eventTap == nil else { return }
+        guard AXIsProcessTrusted() else {
+            AppLogger.shared.error("Hotkey monitor unavailable: Accessibility permission is not granted")
+            onStatusChange("Needs Accessibility")
+            return
+        }
         let mask = (1 << CGEventType.keyDown.rawValue) | (1 << CGEventType.flagsChanged.rawValue)
         let ref = Unmanaged.passUnretained(self).toOpaque()
         guard let tap = CGEvent.tapCreate(
@@ -35,6 +46,8 @@ final class GlobalHotKeyMonitor {
             },
             userInfo: ref
         ) else {
+            AppLogger.shared.error("CGEvent tap creation failed")
+            onStatusChange("Hotkey inactive")
             return
         }
         eventTap = tap
@@ -42,6 +55,8 @@ final class GlobalHotKeyMonitor {
         runLoopSource = source
         CFRunLoopAddSource(CFRunLoopGetMain(), source, .commonModes)
         CGEvent.tapEnable(tap: tap, enable: true)
+        AppLogger.shared.info("Global hotkey monitor active for \(hotKey.displayName)")
+        onStatusChange("Active")
     }
 
     func stop() {
@@ -56,6 +71,15 @@ final class GlobalHotKeyMonitor {
     }
 
     private func handle(type: CGEventType, event: CGEvent) -> Unmanaged<CGEvent>? {
+        if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
+            if let eventTap {
+                CGEvent.tapEnable(tap: eventTap, enable: true)
+                AppLogger.shared.info("Re-enabled disabled event tap")
+                onStatusChange("Active")
+            }
+            return Unmanaged.passUnretained(event)
+        }
+
         let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
         if type == .flagsChanged, keyCode == Int64(kVK_RightShift) {
             rightShiftDown = event.flags.contains(.maskShift)
@@ -68,6 +92,7 @@ final class GlobalHotKeyMonitor {
 
         let carbon = event.flags.carbonModifiers
         if hotKey.matches(keyCode: keyCode, carbonModifiers: carbon, rightShift: rightShiftDown) {
+            AppLogger.shared.info("Global hotkey triggered")
             onTrigger()
             return nil
         }

@@ -13,6 +13,7 @@ final class AppModel: ObservableObject {
     @Published var apiKeyDraft = ""
     @Published var apiKeySummary = "Not set"
     @Published private(set) var hasSavedAPIKey = false
+    @Published var hotKeyStatusText = "Checking"
     @Published var hotKey: HotKey
     @Published var isLaunchAtLoginEnabled = false
     @Published var isRecordingHotKey = false
@@ -25,7 +26,7 @@ final class AppModel: ObservableObject {
     weak var hotKeyMonitor: GlobalHotKeyMonitor?
 
     init(
-        keychainStore: APIKeyStoring = KeychainAPIKeyStore(),
+        keychainStore: APIKeyStoring = FileAPIKeyStore(),
         hotKeyStore: HotKeyStore = HotKeyStore(),
         apiKeyMetadataStore: APIKeyMetadataStore = APIKeyMetadataStore()
     ) {
@@ -122,6 +123,7 @@ final class AppModel: ObservableObject {
     }
 
     func requestAccessibilityPermission() {
+        AppLogger.shared.info("Requesting Accessibility permission")
         AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
         objectWillChange.send()
     }

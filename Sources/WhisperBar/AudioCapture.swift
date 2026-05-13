@@ -8,6 +8,7 @@ final class AudioCapture {
     private var onAudio: ((Data) -> Void)?
 
     func start(onAudio: @escaping (Data) -> Void) throws {
+        AppLogger.shared.info("Starting microphone capture")
         self.onAudio = onAudio
         let input = engine.inputNode
         let format = input.outputFormat(forBus: 0)
@@ -20,14 +21,16 @@ final class AudioCapture {
                     self.onAudio?(data)
                 }
             } catch {
-                // Surface conversion failures through the main dictation path on the next stop.
+                AppLogger.shared.error("Audio conversion failed: \(error.localizedDescription)")
             }
         }
         engine.prepare()
         try engine.start()
+        AppLogger.shared.info("Microphone capture started")
     }
 
     func stop() {
+        AppLogger.shared.info("Stopping microphone capture")
         engine.inputNode.removeTap(onBus: 0)
         engine.stop()
         onAudio = nil

@@ -24,6 +24,7 @@ public final class RealtimeTranscriptionClient: @unchecked Sendable {
     public func connect() {
         queue.async {
             guard self.webSocket == nil else { return }
+            AppLogger.shared.info("Connecting Realtime transcription WebSocket")
             var request = URLRequest(url: self.url)
             request.setValue("Bearer \(self.apiKey)", forHTTPHeaderField: "Authorization")
             request.setValue("realtime=v1", forHTTPHeaderField: "OpenAI-Beta")
@@ -70,6 +71,7 @@ public final class RealtimeTranscriptionClient: @unchecked Sendable {
         guard let text = String(data: data, encoding: .utf8) else { return }
         webSocket?.send(.string(text)) { [weak self] error in
             guard let self, let error else { return }
+            AppLogger.shared.error("Realtime send failed: \(error.localizedDescription)")
             self.delegate?.realtimeClient(self, didFail: error)
         }
     }
@@ -101,6 +103,7 @@ public final class RealtimeTranscriptionClient: @unchecked Sendable {
                 }
             case .failure(let error):
                 if self.isConnected {
+                    AppLogger.shared.error("Realtime receive failed: \(error.localizedDescription)")
                     self.delegate?.realtimeClient(self, didFail: error)
                 }
             }

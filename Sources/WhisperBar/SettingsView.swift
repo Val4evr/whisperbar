@@ -124,6 +124,9 @@ struct SettingsView: View {
                 .controlSize(.small)
                 .help("Reset hotkey")
             }
+            Text(model.hotKeyStatusText)
+                .font(.caption2)
+                .foregroundStyle(model.hotKeyStatusText == "Active" ? .green : .secondary)
             .background(HotKeyCaptureView(isRecording: $model.isRecordingHotKey) { hotKey in
                 model.setHotKey(hotKey)
                 model.isRecordingHotKey = false
@@ -156,6 +159,7 @@ struct SettingsView: View {
             Text(AppConstants.transcriptionModel)
                 .font(.caption2)
                 .foregroundStyle(.secondary)
+                .help(AppLogger.shared.logFilePath)
             Spacer()
             Button("Quit") {
                 NSApp.terminate(nil)
