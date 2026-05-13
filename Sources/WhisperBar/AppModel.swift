@@ -19,15 +19,21 @@ final class AppModel: ObservableObject {
 
     private let keychainStore: APIKeyStoring
     private let hotKeyStore: HotKeyStore
+    private let apiKeyMetadataStore: APIKeyMetadataStore
 
     weak var dictationController: DictationController?
     weak var hotKeyMonitor: GlobalHotKeyMonitor?
 
-    init(keychainStore: APIKeyStoring = KeychainAPIKeyStore(), hotKeyStore: HotKeyStore = HotKeyStore()) {
+    init(
+        keychainStore: APIKeyStoring = KeychainAPIKeyStore(),
+        hotKeyStore: HotKeyStore = HotKeyStore(),
+        apiKeyMetadataStore: APIKeyMetadataStore = APIKeyMetadataStore()
+    ) {
         self.keychainStore = keychainStore
         self.hotKeyStore = hotKeyStore
+        self.apiKeyMetadataStore = apiKeyMetadataStore
         self.hotKey = hotKeyStore.load()
-        refreshAPIKeySummary()
+        loadAPIKeyMetadata()
         refreshLaunchAtLogin()
     }
 
@@ -50,7 +56,11 @@ final class AppModel: ObservableObject {
     }
 
     func readAPIKey() throws -> String? {
-        try keychainStore.readAPIKey()
+        let apiKey = try keychainStore.readAPIKey()
+        if let apiKey, !apiKey.isEmpty {
+            updateAPIKeyMetadata(for: apiKey)
+        }
+        return apiKey
     }
 
     func saveAPIKey() {
@@ -63,7 +73,7 @@ final class AppModel: ObservableObject {
             try keychainStore.saveAPIKey(normalized)
             apiKeyDraft = ""
             lastError = nil
-            refreshAPIKeySummary()
+            updateAPIKeyMetadata(for: normalized)
         } catch {
             lastError = error.localizedDescription
         }
@@ -72,16 +82,29 @@ final class AppModel: ObservableObject {
     func deleteAPIKey() {
         do {
             try keychainStore.deleteAPIKey()
-            refreshAPIKeySummary()
+            clearAPIKeyMetadata()
         } catch {
             lastError = error.localizedDescription
         }
     }
 
-    func refreshAPIKeySummary() {
-        let savedKey = try? keychainStore.readAPIKey()
-        apiKeySummary = APIKeyValidator.redacted(savedKey)
-        hasSavedAPIKey = savedKey?.isEmpty == false
+    func loadAPIKeyMetadata() {
+        let metadata = apiKeyMetadataStore.load()
+        apiKeySummary = metadata.redactedKey
+        hasSavedAPIKey = metadata.hasSavedKey
+    }
+
+    private func updateAPIKeyMetadata(for key: String) {
+        let redacted = APIKeyValidator.redacted(key)
+        apiKeySummary = redacted
+        hasSavedAPIKey = true
+        apiKeyMetadataStore.save(redactedKey: redacted)
+    }
+
+    private func clearAPIKeyMetadata() {
+        apiKeySummary = "Not set"
+        hasSavedAPIKey = false
+        apiKeyMetadataStore.clear()
     }
 
     func setHotKey(_ hotKey: HotKey) {

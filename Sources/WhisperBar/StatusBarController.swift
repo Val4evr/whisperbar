@@ -39,7 +39,6 @@ final class StatusBarController: NSObject {
         if popover.isShown {
             popover.performClose(sender)
         } else {
-            model.refreshAPIKeySummary()
             model.refreshLaunchAtLogin()
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
             popover.contentViewController?.view.window?.makeKey()
