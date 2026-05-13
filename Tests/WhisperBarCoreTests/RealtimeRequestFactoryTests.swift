@@ -17,6 +17,7 @@ struct RealtimeRequestFactoryTests {
         #expect(format["rate"] as? Int == 24_000)
         let transcription = try #require(input["transcription"] as? [String: Any])
         #expect(transcription["model"] as? String == "gpt-realtime-whisper")
+        #expect(input["turn_detection"] == nil)
     }
 
     @Test func appendAudioBase64EncodesPCM() throws {

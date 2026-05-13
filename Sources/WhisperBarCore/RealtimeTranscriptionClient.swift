@@ -27,7 +27,6 @@ public final class RealtimeTranscriptionClient: @unchecked Sendable {
             AppLogger.shared.info("Connecting Realtime transcription WebSocket")
             var request = URLRequest(url: self.url)
             request.setValue("Bearer \(self.apiKey)", forHTTPHeaderField: "Authorization")
-            request.setValue("realtime=v1", forHTTPHeaderField: "OpenAI-Beta")
             let socket = self.session.webSocketTask(with: request)
             self.webSocket = socket
             self.isConnected = true

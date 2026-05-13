@@ -1,7 +1,7 @@
 import Foundation
 
 public enum RealtimeRequestFactory {
-    public static func sessionUpdate(language: String? = "en", serverVAD: Bool = true) throws -> Data {
+    public static func sessionUpdate(language: String? = "en") throws -> Data {
         var transcription: [String: Any] = [
             "model": AppConstants.transcriptionModel
         ]
@@ -14,13 +14,7 @@ public enum RealtimeRequestFactory {
                 "type": "audio/pcm",
                 "rate": AppConstants.audioSampleRate
             ],
-            "transcription": transcription,
-            "turn_detection": serverVAD ? [
-                "type": "server_vad",
-                "threshold": 0.5,
-                "prefix_padding_ms": 300,
-                "silence_duration_ms": 500
-            ] : NSNull()
+            "transcription": transcription
         ]
 
         let payload: [String: Any] = [

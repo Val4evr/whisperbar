@@ -22,7 +22,7 @@ struct HotKeyTests {
     }
 
     @Test func displayNameIsReadable() {
-        #expect(HotKey.defaultToggle.displayName == "Opt + Ctrl + Space")
+        #expect(HotKey.defaultToggle.displayName == "Ctrl + Opt + Space")
     }
 
     @Test func legacyHelpMenuShortcutStillRequiresRightShift() {

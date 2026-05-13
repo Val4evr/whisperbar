@@ -10,7 +10,16 @@ Scripts/build-app.sh
 open Build/WhisperBar.app
 ```
 
-The app stores your OpenAI API key in macOS Keychain. The app bundle includes microphone and Apple Events usage descriptions and runs as an accessory app, so it does not show in the Dock.
+The app stores your OpenAI API key in a user-only app support file. The app bundle includes microphone and Apple Events usage descriptions and runs as an accessory app, so it does not show in the Dock.
+
+For day-to-day testing, install a consistently signed copy:
+
+```sh
+Scripts/build-install.sh
+open /Applications/WhisperBar.app
+```
+
+The first signed install may ask for access to your Apple Development signing key while building. Choose Always Allow for `codesign`; after that, macOS permissions should survive app updates because the bundle identifier and signing identity stay stable.
 
 ## Default Hotkey
 

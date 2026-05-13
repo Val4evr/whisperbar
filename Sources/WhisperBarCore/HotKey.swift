@@ -33,8 +33,8 @@ public struct HotKey: Codable, Equatable, Sendable {
     public var displayName: String {
         var pieces: [String] = []
         if carbonModifiers & UInt32(cmdKey) != 0 { pieces.append("Cmd") }
-        if carbonModifiers & UInt32(optionKey) != 0 { pieces.append("Opt") }
         if carbonModifiers & UInt32(controlKey) != 0 { pieces.append("Ctrl") }
+        if carbonModifiers & UInt32(optionKey) != 0 { pieces.append("Opt") }
         if carbonModifiers & UInt32(shiftKey) != 0 {
             pieces.append(shiftSide == .right ? "Right Shift" : "Shift")
         }

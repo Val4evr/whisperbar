@@ -25,7 +25,11 @@ public enum RealtimeTranscriptionEventParser {
             return .completed(itemID: dict["item_id"] as? String, transcript: dict["transcript"] as? String ?? "")
         case "session.created":
             return .sessionCreated
+        case "transcription_session.created":
+            return .sessionCreated
         case "session.updated":
+            return .sessionUpdated
+        case "transcription_session.updated":
             return .sessionUpdated
         case "input_audio_buffer.committed":
             return .committed

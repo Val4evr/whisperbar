@@ -10,6 +10,7 @@ final class DictationController: NSObject {
     private let pasteboardCoordinator = PasteboardCoordinator()
     private var realtimeClient: RealtimeTranscriptionClient?
     private var finalTranscripts: [String] = []
+    private var audioBytesSent = 0
 
     init(model: AppModel, pillController: PillWindowController) {
         self.model = model
@@ -55,6 +56,7 @@ final class DictationController: NSObject {
             }
 
             finalTranscripts = []
+            audioBytesSent = 0
             model.liveTranscript = ""
             model.lastError = nil
             model.statusText = "Connecting"
@@ -67,6 +69,7 @@ final class DictationController: NSObject {
             client.connect()
 
             try audioCapture.start { [weak self] data in
+                self?.audioBytesSent += data.count
                 self?.realtimeClient?.appendAudio(data)
             }
             model.statusText = "Listening"
@@ -83,7 +86,9 @@ final class DictationController: NSObject {
         model.isRecording = false
         model.statusText = "Finishing"
         audioCapture.stop()
-        realtimeClient?.commit()
+        if audioBytesSent >= 4_800 {
+            realtimeClient?.commit()
+        }
 
         Task { [weak self] in
             try? await Task.sleep(nanoseconds: 1_000_000_000)
@@ -126,6 +131,10 @@ extension DictationController: RealtimeTranscriptionClientDelegate {
                     self.model.liveTranscript = self.finalTranscripts.joined(separator: " ")
                 }
             case .error(let message):
+                if message.localizedCaseInsensitiveContains("buffer too small") {
+                    AppLogger.shared.info("Ignoring benign Realtime commit warning: \(message)")
+                    break
+                }
                 self.model.lastError = message
                 AppLogger.shared.error("Realtime API error: \(message)")
                 self.model.statusText = "Error"

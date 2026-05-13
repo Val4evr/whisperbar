@@ -47,6 +47,11 @@ struct RealtimeTranscriptionEventParserTests {
         #expect(event == .ignored(type: "rate_limits.updated"))
     }
 
+    @Test func acceptsTranscriptionSessionLifecycleEvents() throws {
+        #expect(try parse(#"{ "type": "transcription_session.created" }"#) == .sessionCreated)
+        #expect(try parse(#"{ "type": "transcription_session.updated" }"#) == .sessionUpdated)
+    }
+
     private func parse(_ json: String) throws -> RealtimeTranscriptionEvent {
         try RealtimeTranscriptionEventParser.parse(Data(json.utf8))
     }

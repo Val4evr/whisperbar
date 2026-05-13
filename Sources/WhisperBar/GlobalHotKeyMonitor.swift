@@ -9,6 +9,8 @@ final class GlobalHotKeyMonitor {
     private let onStatusChange: @MainActor (String) -> Void
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
+    private var carbonHotKeyRef: EventHotKeyRef?
+    private var carbonEventHandlerRef: EventHandlerRef?
     private var rightShiftDown = false
 
     init(
@@ -23,9 +25,88 @@ final class GlobalHotKeyMonitor {
 
     func update(hotKey: HotKey) {
         self.hotKey = hotKey
+        stop()
+        start()
     }
 
     func start() {
+        if hotKey.shiftSide != .right, startCarbonHotKey() {
+            return
+        }
+        startEventTapHotKey()
+    }
+
+    func stop() {
+        if let carbonHotKeyRef {
+            UnregisterEventHotKey(carbonHotKeyRef)
+        }
+        if let carbonEventHandlerRef {
+            RemoveEventHandler(carbonEventHandlerRef)
+        }
+        carbonHotKeyRef = nil
+        carbonEventHandlerRef = nil
+
+        if let eventTap {
+            CGEvent.tapEnable(tap: eventTap, enable: false)
+        }
+        if let runLoopSource {
+            CFRunLoopRemoveSource(CFRunLoopGetMain(), runLoopSource, .commonModes)
+        }
+        eventTap = nil
+        runLoopSource = nil
+    }
+
+    private func startCarbonHotKey() -> Bool {
+        guard carbonHotKeyRef == nil else { return true }
+
+        var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
+        let ref = Unmanaged.passUnretained(self).toOpaque()
+        let handlerStatus = InstallEventHandler(
+            GetEventDispatcherTarget(),
+            { _, event, userData in
+                guard let userData else { return noErr }
+                let monitor = Unmanaged<GlobalHotKeyMonitor>.fromOpaque(userData).takeUnretainedValue()
+                monitor.handleCarbonHotKey(event: event)
+                return noErr
+            },
+            1,
+            &eventType,
+            ref,
+            &carbonEventHandlerRef
+        )
+        guard handlerStatus == noErr else {
+            AppLogger.shared.error("Carbon hotkey handler install failed with status \(handlerStatus)")
+            onStatusChange("Hotkey inactive")
+            return false
+        }
+
+        let hotKeyID = EventHotKeyID(signature: OSType(0x57484252), id: 1) // WHBR
+        var hotKeyRef: EventHotKeyRef?
+        let registerStatus = RegisterEventHotKey(
+            UInt32(hotKey.keyCode),
+            hotKey.carbonModifiers,
+            hotKeyID,
+            GetEventDispatcherTarget(),
+            0,
+            &hotKeyRef
+        )
+        guard registerStatus == noErr, let hotKeyRef else {
+            if let carbonEventHandlerRef {
+                RemoveEventHandler(carbonEventHandlerRef)
+            }
+            carbonEventHandlerRef = nil
+            AppLogger.shared.error("Carbon hotkey registration failed with status \(registerStatus) for \(hotKey.displayName)")
+            onStatusChange("Hotkey inactive")
+            return false
+        }
+
+        carbonHotKeyRef = hotKeyRef
+        AppLogger.shared.info("Carbon global hotkey active for \(hotKey.displayName)")
+        onStatusChange("Active")
+        return true
+    }
+
+    private func startEventTapHotKey() {
         guard eventTap == nil else { return }
         guard AXIsProcessTrusted() else {
             AppLogger.shared.error("Hotkey monitor unavailable: Accessibility permission is not granted")
@@ -59,15 +140,9 @@ final class GlobalHotKeyMonitor {
         onStatusChange("Active")
     }
 
-    func stop() {
-        if let eventTap {
-            CGEvent.tapEnable(tap: eventTap, enable: false)
-        }
-        if let runLoopSource {
-            CFRunLoopRemoveSource(CFRunLoopGetMain(), runLoopSource, .commonModes)
-        }
-        eventTap = nil
-        runLoopSource = nil
+    private func handleCarbonHotKey(event: EventRef?) {
+        AppLogger.shared.info("Carbon global hotkey triggered")
+        onTrigger()
     }
 
     private func handle(type: CGEventType, event: CGEvent) -> Unmanaged<CGEvent>? {
