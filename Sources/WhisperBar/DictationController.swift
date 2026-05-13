@@ -36,11 +36,6 @@ final class DictationController: NSObject {
 
     private func startDictation() {
         guard !model.isRecording else { return }
-        guard AXIsProcessTrusted() else {
-            model.lastError = "Accessibility permission is required for the global hotkey and paste."
-            AppLogger.shared.error(model.lastError ?? "Accessibility permission missing")
-            return
-        }
         guard AVCaptureDevice.authorizationStatus(for: .audio) == .authorized else {
             model.lastError = "Microphone permission is required."
             AppLogger.shared.error(model.lastError ?? "Microphone permission missing")
@@ -104,7 +99,13 @@ final class DictationController: NSObject {
         model.statusText = "Ready"
         model.liveTranscript = ""
         if !text.isEmpty {
-            await pasteboardCoordinator.pasteAndRestore(ClipboardRestorePlan(dictatedText: text))
+            if AXIsProcessTrusted() {
+                await pasteboardCoordinator.pasteAndRestore(ClipboardRestorePlan(dictatedText: text))
+            } else {
+                pasteboardCoordinator.copyOnly(text)
+                model.lastError = "Accessibility permission is needed to paste automatically. Transcript copied instead."
+                AppLogger.shared.error(model.lastError ?? "Accessibility permission missing for paste")
+            }
         }
     }
 

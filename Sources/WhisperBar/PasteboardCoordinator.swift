@@ -19,6 +19,10 @@ final class PasteboardCoordinator {
         snapshot.restore(to: pasteboard)
     }
 
+    func copyOnly(_ text: String) {
+        write(text: text)
+    }
+
     private func write(text: String) {
         pasteboard.clearContents()
         pasteboard.setString(text, forType: .string)
