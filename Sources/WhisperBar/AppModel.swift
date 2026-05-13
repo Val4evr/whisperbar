@@ -9,6 +9,7 @@ final class AppModel: ObservableObject {
     @Published var isRecording = false
     @Published var statusText = "Ready"
     @Published var liveTranscript = ""
+    @Published var audioLevel: Double = 0
     @Published var lastError: String?
     @Published var apiKeyDraft = ""
     @Published var apiKeySummary = "Not set"

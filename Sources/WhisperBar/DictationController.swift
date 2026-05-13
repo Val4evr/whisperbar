@@ -52,6 +52,7 @@ final class DictationController: NSObject {
 
             finalTranscripts = []
             audioBytesSent = 0
+            model.audioLevel = 0
             model.liveTranscript = ""
             model.lastError = nil
             model.statusText = "Connecting"
@@ -63,9 +64,13 @@ final class DictationController: NSObject {
             realtimeClient = client
             client.connect()
 
-            try audioCapture.start { [weak self] data in
-                self?.audioBytesSent += data.count
-                self?.realtimeClient?.appendAudio(data)
+            try audioCapture.start { [weak self] data, level in
+                guard let self else { return }
+                self.audioBytesSent += data.count
+                self.realtimeClient?.appendAudio(data)
+                Task { @MainActor [weak self] in
+                    self?.model.audioLevel = level
+                }
             }
             model.statusText = "Listening"
         } catch {
@@ -81,6 +86,7 @@ final class DictationController: NSObject {
         model.isRecording = false
         model.statusText = "Finishing"
         audioCapture.stop()
+        model.audioLevel = 0
         if audioBytesSent >= 4_800 {
             realtimeClient?.commit()
         }
@@ -97,6 +103,7 @@ final class DictationController: NSObject {
         realtimeClient = nil
         pillController.hide()
         model.statusText = "Ready"
+        model.audioLevel = 0
         model.liveTranscript = ""
         if !text.isEmpty {
             if AXIsProcessTrusted() {
