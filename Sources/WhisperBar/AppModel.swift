@@ -12,6 +12,7 @@ final class AppModel: ObservableObject {
     @Published var lastError: String?
     @Published var apiKeyDraft = ""
     @Published var apiKeySummary = "Not set"
+    @Published private(set) var hasSavedAPIKey = false
     @Published var hotKey: HotKey
     @Published var isLaunchAtLoginEnabled = false
     @Published var isRecordingHotKey = false
@@ -31,7 +32,7 @@ final class AppModel: ObservableObject {
     }
 
     var hasAPIKey: Bool {
-        (try? keychainStore.readAPIKey())??.isEmpty == false
+        hasSavedAPIKey
     }
 
     var microphoneStatusText: String {
@@ -78,7 +79,9 @@ final class AppModel: ObservableObject {
     }
 
     func refreshAPIKeySummary() {
-        apiKeySummary = APIKeyValidator.redacted(try? keychainStore.readAPIKey())
+        let savedKey = try? keychainStore.readAPIKey()
+        apiKeySummary = APIKeyValidator.redacted(savedKey)
+        hasSavedAPIKey = savedKey?.isEmpty == false
     }
 
     func setHotKey(_ hotKey: HotKey) {
