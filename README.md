@@ -4,6 +4,22 @@ WhisperBar is a small native macOS menu bar dictation app. It is intentionally n
 
 The app talks directly to the OpenAI API from the Mac. There is no backend, account sync, model picker, endpoint picker, or developer settings surface.
 
+## Install
+
+Official install path for now: point a coding agent at [INSTALL.md](INSTALL.md) and ask it to install WhisperBar from source.
+
+Short version:
+
+```sh
+git clone https://github.com/Val4evr/menubar-dictation.git
+cd menubar-dictation
+swift test
+Scripts/build-install.sh
+open -a /Applications/WhisperBar.app
+```
+
+Then add your own OpenAI API key in the menu bar panel and grant Microphone/Accessibility permissions to `/Applications/WhisperBar.app`.
+
 ## Functionality
 
 - Lives only in the macOS menu bar. It does not show a Dock icon.
@@ -178,9 +194,9 @@ git commit -m "<message>"
 git push
 ```
 
-## Distribution
+## Optional Packaged Distribution
 
-For friends, the proper direct-distribution path is **Developer ID signing plus Apple notarization**. Do not send `Build/WhisperBar.app`, and do not rely on an Apple Development signature for release builds. Development signatures are for your own machines; friends will hit Gatekeeper friction and may lose permission continuity across builds.
+The recommended install path is currently source install via [INSTALL.md](INSTALL.md). For non-technical users, the proper direct-distribution path is **Developer ID signing plus Apple notarization**. Do not send `Build/WhisperBar.app`, and do not rely on an Apple Development signature for release builds. Development signatures are for your own machines; friends will hit Gatekeeper friction and may lose permission continuity across builds.
 
 One-time setup:
 
