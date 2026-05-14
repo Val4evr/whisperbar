@@ -84,7 +84,6 @@ struct DictationPillView: View {
         .background {
             RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .fill(.ultraThinMaterial)
-                .shadow(color: .black.opacity(0.26), radius: 18, x: 0, y: 12)
         }
         .overlay {
             RoundedRectangle(cornerRadius: 22, style: .continuous)
