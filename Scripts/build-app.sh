@@ -15,6 +15,7 @@ swift build -c release --product WhisperBar
 rm -rf "$APP_DIR"
 mkdir -p "$MACOS_DIR" "$CONTENTS_DIR/Resources"
 cp ".build/release/WhisperBar" "$MACOS_DIR/WhisperBar"
+cp "$ROOT_DIR/Resources/WhisperBar.icns" "$CONTENTS_DIR/Resources/WhisperBar.icns"
 
 cat > "$CONTENTS_DIR/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -24,6 +25,8 @@ cat > "$CONTENTS_DIR/Info.plist" <<PLIST
   <key>CFBundleDevelopmentRegion</key>
   <string>en</string>
   <key>CFBundleExecutable</key>
+  <string>WhisperBar</string>
+  <key>CFBundleIconFile</key>
   <string>WhisperBar</string>
   <key>CFBundleIdentifier</key>
   <string>ai.valprok.WhisperBar</string>

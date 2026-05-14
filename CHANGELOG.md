@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.1 - 2026-05-14
+
+Release polish.
+
+- Add the WhisperBar app icon to the macOS app bundle.
+- Stamp a simple Finder icon layout into unsigned DMG builds.
+
 ## 0.1.0 - 2026-05-14
 
 First usable release.

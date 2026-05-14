@@ -16,6 +16,42 @@ cleanup() {
 }
 trap cleanup EXIT
 
+stage_finder_layout() {
+  if [[ "${WHISPERBAR_SKIP_DMG_LAYOUT:-0}" == "1" ]]; then
+    return
+  fi
+
+  if ! /usr/bin/osascript >/dev/null <<APPLESCRIPT
+set dmgFolder to POSIX file "$DMG_ROOT" as alias
+
+tell application "Finder"
+  open dmgFolder
+  delay 0.5
+
+  set dmgWindow to container window of dmgFolder
+  set current view of dmgWindow to icon view
+  set toolbar visible of dmgWindow to false
+  set statusbar visible of dmgWindow to false
+  set bounds of dmgWindow to {120, 120, 660, 420}
+
+  set viewOptions to icon view options of dmgWindow
+  set arrangement of viewOptions to not arranged
+  set icon size of viewOptions to 104
+  set text size of viewOptions to 13
+
+  set position of item "WhisperBar.app" of dmgFolder to {170, 145}
+  set position of item "Applications" of dmgFolder to {390, 145}
+
+  update dmgFolder without registering applications
+  close dmgWindow
+end tell
+APPLESCRIPT
+  then
+    echo "warning: unable to set Finder layout; continuing with a plain DMG" >&2
+    return
+  fi
+}
+
 cd "$ROOT_DIR"
 "$ROOT_DIR/Scripts/build-app.sh" >/dev/null
 
@@ -43,6 +79,7 @@ codesign \
 codesign --verify --deep --strict --verbose=2 "$CLEAN_APP"
 ditto "$CLEAN_APP" "$DMG_ROOT/WhisperBar.app"
 ln -s /Applications "$DMG_ROOT/Applications"
+stage_finder_layout
 
 hdiutil create \
   -volname "WhisperBar $VERSION" \
