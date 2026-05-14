@@ -15,6 +15,14 @@ public enum UsagePeriod: String, CaseIterable, Codable, Identifiable, Sendable {
         }
     }
 
+    public var bucketTitle: String {
+        switch self {
+        case .day: return "Hour"
+        case .week: return "Day"
+        case .month: return "Day"
+        }
+    }
+
     var bucketCount: Int {
         switch self {
         case .day: return 24
@@ -49,10 +57,12 @@ public struct UsageEntry: Codable, Equatable, Sendable {
 
 public struct UsageBucket: Equatable, Sendable {
     public var label: String
+    public var detailLabel: String
     public var durationSeconds: Double
 
-    public init(label: String, durationSeconds: Double) {
+    public init(label: String, detailLabel: String? = nil, durationSeconds: Double) {
         self.label = label
+        self.detailLabel = detailLabel ?? label
         self.durationSeconds = durationSeconds
     }
 }
@@ -91,7 +101,11 @@ public struct UsageSummary: Equatable, Sendable {
                 let seconds = entries
                     .filter { calendar.component(.hour, from: $0.startedAt) == hour }
                     .reduce(0) { $0 + $1.durationSeconds }
-                return UsageBucket(label: hour % 6 == 0 ? "\(hour)" : "", durationSeconds: seconds)
+                return UsageBucket(
+                    label: hour % 6 == 0 ? "\(hour)" : "",
+                    detailLabel: String(format: "%02d:00", hour),
+                    durationSeconds: seconds
+                )
             }
         case .week:
             return (0..<7).map { offset in
@@ -100,7 +114,7 @@ public struct UsageSummary: Equatable, Sendable {
                     .filter { calendar.isDate($0.startedAt, inSameDayAs: date) }
                     .reduce(0) { $0 + $1.durationSeconds }
                 let label = calendar.shortWeekdaySymbols[calendar.component(.weekday, from: date) - 1]
-                return UsageBucket(label: String(label.prefix(1)), durationSeconds: seconds)
+                return UsageBucket(label: String(label.prefix(1)), detailLabel: label, durationSeconds: seconds)
             }
         case .month:
             return (0..<30).map { offset in
@@ -109,7 +123,7 @@ public struct UsageSummary: Equatable, Sendable {
                     .filter { calendar.isDate($0.startedAt, inSameDayAs: date) }
                     .reduce(0) { $0 + $1.durationSeconds }
                 let day = calendar.component(.day, from: date)
-                return UsageBucket(label: offset % 7 == 0 ? "\(day)" : "", durationSeconds: seconds)
+                return UsageBucket(label: offset % 7 == 0 ? "\(day)" : "", detailLabel: "\(day)", durationSeconds: seconds)
             }
         }
     }

@@ -49,6 +49,5 @@ PLIST
 
 xattr -cr "$APP_DIR"
 find "$APP_DIR" -exec xattr -c {} + 2>/dev/null || true
-codesign --force --deep --sign - "$APP_DIR" >/dev/null
 
 echo "$APP_DIR"

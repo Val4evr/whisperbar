@@ -49,13 +49,10 @@ struct SettingsView: View {
                 metric("Minutes", value: minutesString(model.usageSummary.durationSeconds))
                 metric("Cost", value: costString(model.usageSummary.estimatedCostUSD))
             }
+            .padding(.bottom, 8)
 
-            UsageBarChart(buckets: model.usageSummary.buckets)
-                .frame(height: 54)
-
-            Text("Estimated from local dictation duration at $0.017/min.")
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
+            UsageBarChart(period: model.selectedUsagePeriod, buckets: model.usageSummary.buckets)
+                .frame(height: 70)
         }
     }
 
@@ -242,6 +239,7 @@ struct SettingsView: View {
 }
 
 private struct UsageBarChart: View {
+    var period: UsagePeriod
     var buckets: [UsageBucket]
     @State private var hoveredIndex: Int?
 
@@ -288,10 +286,11 @@ private struct UsageBarChart: View {
 
     private var hoverText: String {
         guard let hoveredBucket else {
-            return "Hover a bar for details"
+            return " "
         }
-        let label = hoveredBucket.label.isEmpty ? "Bucket" : hoveredBucket.label
-        return "\(label) · \(minutesString(hoveredBucket.durationSeconds)) min · \(costString(hoveredBucket.durationSeconds / 60 * AppConstants.realtimeWhisperUSDPerMinute))"
+        let tokens = Int((hoveredBucket.durationSeconds * AppConstants.estimatedAudioTokensPerSecond).rounded())
+        let cost = hoveredBucket.durationSeconds / 60 * AppConstants.realtimeWhisperUSDPerMinute
+        return "\(period.bucketTitle) \(hoveredBucket.detailLabel) · \(tokens) tokens · \(minutesString(hoveredBucket.durationSeconds)) min · \(costString(cost))"
     }
 
     private func barColor(bucket: UsageBucket, index: Int) -> Color {
