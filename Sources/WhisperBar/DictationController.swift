@@ -54,7 +54,6 @@ final class DictationController: NSObject {
             audioBytesSent = 0
             model.audioLevel = 0
             model.liveTranscript = ""
-            model.hasUserEditedTranscript = false
             model.lastError = nil
             model.statusText = "Connecting"
             model.isRecording = true
@@ -118,9 +117,6 @@ final class DictationController: NSObject {
     }
 
     private func finalTranscriptText() -> String {
-        if model.hasUserEditedTranscript {
-            return model.liveTranscript.trimmingCharacters(in: .whitespacesAndNewlines)
-        }
         let completed = finalTranscripts.joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
         if !completed.isEmpty {
             return completed
@@ -140,9 +136,7 @@ extension DictationController: RealtimeTranscriptionClientDelegate {
                 let normalized = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
                 if !normalized.isEmpty {
                     self.finalTranscripts.append(normalized)
-                    if !self.model.hasUserEditedTranscript {
-                        self.model.liveTranscript = self.finalTranscripts.joined(separator: " ")
-                    }
+                    self.model.liveTranscript = self.finalTranscripts.joined(separator: " ")
                 }
             case .error(let message):
                 if message.localizedCaseInsensitiveContains("buffer too small") {

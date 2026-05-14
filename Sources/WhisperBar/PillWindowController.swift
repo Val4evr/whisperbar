@@ -9,7 +9,7 @@ final class PillWindowController {
 
     init(model: AppModel) {
         self.model = model
-        let panel = FloatingPillPanel(
+        let panel = NSPanel(
             contentRect: NSRect(x: 0, y: 0, width: 584, height: 172),
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
@@ -74,12 +74,7 @@ struct DictationPillView: View {
             }
             .frame(height: 24)
 
-            TranscriptTextView(
-                text: model.liveTranscript,
-                onTextChanged: { text in
-                    model.updateTranscriptFromUser(text)
-                }
-            )
+            TranscriptTextView(text: model.liveTranscript)
                 .frame(height: 78)
                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
         }
@@ -96,11 +91,6 @@ struct DictationPillView: View {
         }
         .padding(12)
     }
-}
-
-final class FloatingPillPanel: NSPanel {
-    override var canBecomeKey: Bool { true }
-    override var canBecomeMain: Bool { false }
 }
 
 struct LiveAudioBars: View {
@@ -171,10 +161,9 @@ final class DragHandleView: NSView {
 
 struct TranscriptTextView: NSViewRepresentable {
     var text: String
-    var onTextChanged: (String) -> Void
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(onTextChanged: onTextChanged)
+        Coordinator()
     }
 
     func makeNSView(context: Context) -> NSScrollView {
@@ -186,8 +175,7 @@ struct TranscriptTextView: NSViewRepresentable {
 
         let textView = NSTextView()
         textView.drawsBackground = false
-        textView.isEditable = true
-        textView.allowsUndo = true
+        textView.isEditable = false
         textView.isSelectable = true
         textView.textContainerInset = NSSize(width: 0, height: 0)
         textView.textContainer?.lineFragmentPadding = 0
@@ -198,8 +186,6 @@ struct TranscriptTextView: NSViewRepresentable {
         textView.isHorizontallyResizable = false
         textView.textContainer?.widthTracksTextView = true
         textView.autoresizingMask = [.width]
-        textView.delegate = context.coordinator
-        textView.insertionPointColor = .labelColor
 
         scrollView.documentView = textView
         context.coordinator.textView = textView
@@ -207,17 +193,12 @@ struct TranscriptTextView: NSViewRepresentable {
     }
 
     func updateNSView(_ scrollView: NSScrollView, context: Context) {
-        context.coordinator.onTextChanged = onTextChanged
         guard let textView = context.coordinator.textView else { return }
         let shouldFollowBottom = context.coordinator.isNearBottom(scrollView)
         if textView.string != text {
-            let selectedRanges = textView.selectedRanges
-            context.coordinator.isApplyingProgrammaticChange = true
             textView.string = text
             textView.font = NSFont.systemFont(ofSize: 16, weight: .regular)
             textView.textColor = .labelColor
-            textView.selectedRanges = context.coordinator.validRanges(selectedRanges, for: textView.string)
-            context.coordinator.isApplyingProgrammaticChange = false
         }
         if shouldFollowBottom {
             context.coordinator.scrollToBottom(scrollView)
@@ -225,19 +206,8 @@ struct TranscriptTextView: NSViewRepresentable {
     }
 
     @MainActor
-    final class Coordinator: NSObject, NSTextViewDelegate {
+    final class Coordinator {
         weak var textView: NSTextView?
-        var onTextChanged: (String) -> Void
-        var isApplyingProgrammaticChange = false
-
-        init(onTextChanged: @escaping (String) -> Void) {
-            self.onTextChanged = onTextChanged
-        }
-
-        func textDidChange(_ notification: Notification) {
-            guard !isApplyingProgrammaticChange, let textView = notification.object as? NSTextView else { return }
-            onTextChanged(textView.string)
-        }
 
         func isNearBottom(_ scrollView: NSScrollView) -> Bool {
             guard let documentView = scrollView.documentView else { return true }
@@ -252,16 +222,6 @@ struct TranscriptTextView: NSViewRepresentable {
             let maxY = max(0, documentView.bounds.height - visibleHeight)
             scrollView.contentView.scroll(to: NSPoint(x: 0, y: maxY))
             scrollView.reflectScrolledClipView(scrollView.contentView)
-        }
-
-        func validRanges(_ ranges: [NSValue], for text: String) -> [NSValue] {
-            let maxLocation = (text as NSString).length
-            return ranges.map { value in
-                let range = value.rangeValue
-                let location = min(range.location, maxLocation)
-                let length = min(range.length, max(0, maxLocation - location))
-                return NSValue(range: NSRange(location: location, length: length))
-            }
         }
     }
 }
