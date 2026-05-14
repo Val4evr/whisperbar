@@ -204,57 +204,6 @@ git commit -m "<message>"
 git push
 ```
 
-## Optional Packaged Distribution
-
-The recommended install path is currently source install via [INSTALL.md](INSTALL.md). For non-technical users, the proper direct-distribution path is **Developer ID signing plus Apple notarization**. Do not send `Build/WhisperBar.app`, and do not rely on an Apple Development signature for release builds. Development signatures are for your own machines; friends will hit Gatekeeper friction and may lose permission continuity across builds.
-
-One-time setup:
-
-1. Join the Apple Developer Program.
-2. Create/install a `Developer ID Application` certificate.
-3. Create a notarytool keychain profile:
-
-```sh
-xcrun notarytool store-credentials whisperbar-notary \
-  --apple-id <apple-id> \
-  --team-id <team-id> \
-  --password <app-specific-password>
-```
-
-Release:
-
-```sh
-swift test
-WHISPERBAR_NOTARY_PROFILE=whisperbar-notary Scripts/package-release.sh
-```
-
-The release script:
-
-1. Builds `Build/WhisperBar.app`.
-2. Finds a `Developer ID Application:` signing identity, unless `WHISPERBAR_RELEASE_CODESIGN_IDENTITY` is set.
-3. Signs with hardened runtime and `Resources/WhisperBar.entitlements`.
-4. Creates `Dist/WhisperBar-<version>.zip`.
-5. Submits the ZIP to Apple notarization with `notarytool`.
-6. Staples the notarization ticket to the app.
-7. Repackages the stapled app.
-8. Runs `spctl` assessment.
-
-The distributable artifact is:
-
-```text
-Dist/WhisperBar-<version>.zip
-```
-
-Friends can unzip it, drag `WhisperBar.app` to `/Applications`, open it, add their own OpenAI API key, and grant Microphone/Accessibility permissions to that stable `/Applications` copy.
-
-For a release packaging dry run without notarization:
-
-```sh
-WHISPERBAR_SKIP_NOTARIZATION=1 Scripts/package-release.sh
-```
-
-Dry-run ZIPs are useful for inspecting the bundle, but they are not the recommended way to distribute the app.
-
 ## Troubleshooting
 
 If macOS asks for permissions again, confirm that the running app is:
