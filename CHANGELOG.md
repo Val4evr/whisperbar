@@ -2,7 +2,7 @@
 
 ## 0.1.0 - 2026-05-14
 
-First usable source-install release.
+First usable release.
 
 - Menu bar only macOS dictation app.
 - Realtime transcription through `gpt-realtime-whisper`.
@@ -12,4 +12,5 @@ First usable source-install release.
 - Configurable global hotkey, unset by default.
 - Local day/week/month usage and cost estimate.
 - Launch at login toggle.
-- Source install flow through `INSTALL.md`.
+- Unsigned DMG install flow through GitHub Releases.
+- Source install flow through `INSTALL_FROM_SOURCE.md`.

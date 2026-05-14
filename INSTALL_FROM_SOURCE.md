@@ -1,8 +1,8 @@
-# WhisperBar Install
+# WhisperBar Source Installation Guide
 
-These are the official installation instructions for technical users and coding agents.
+These are the source installation instructions for technical users and coding agents.
 
-WhisperBar is meant to be installed from source for now. This avoids distributing an unsigned or development-signed `.app` bundle and lets each user build, sign, and permission the app on their own Mac.
+Most users should install the unsigned DMG from [Releases](https://github.com/Val4evr/whisperbar/releases). Use this guide only when you want to build WhisperBar locally instead of installing a release artifact.
 
 ## Agent Instructions
 
@@ -160,6 +160,23 @@ open -a /Applications/WhisperBar.app
 
 As long as the app stays at `/Applications/WhisperBar.app` and is signed consistently, macOS permissions should usually survive updates.
 
+## Creating an Unsigned DMG
+
+Release maintainers can build a drag-to-Applications DMG with:
+
+```sh
+swift test
+Scripts/package-dmg.sh
+```
+
+The output is written to:
+
+```text
+Dist/WhisperBar-<version>-unsigned.dmg
+```
+
+Upload that DMG to the matching GitHub Release. The generated app bundle is ad-hoc signed by default so macOS can run it as an app bundle, but it is not Developer ID signed or notarized. Users will still see the normal unsigned-app Gatekeeper warning on first launch.
+
 ## Troubleshooting
 
 Check the running app:
@@ -195,4 +212,4 @@ If macOS still shows duplicate permission entries, remove all WhisperBar entries
 
 An unsigned `.app` downloaded from the internet will run into Gatekeeper warnings. An `.app` signed with someone else's Apple Development certificate is still not a proper public release artifact. The polished direct-distribution path is Developer ID signing plus Apple notarization, which requires a paid Apple Developer Program account.
 
-For a small group of technical friends, source install is simpler and cleaner: each user builds locally, signs locally, grants permissions locally, and keeps control of their own API key.
+For technical users, source install is useful when they want to build locally, sign locally, grant permissions locally, and keep control of their own API key.
