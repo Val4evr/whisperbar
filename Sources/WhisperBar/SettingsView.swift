@@ -5,20 +5,17 @@ struct SettingsView: View {
     @ObservedObject var model: AppModel
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                header
-                usageSection
-                apiSection
-                permissionsSection
-                hotKeySection
-                launchSection
-                errorSection
-                footer
-            }
-            .padding(18)
+        VStack(alignment: .leading, spacing: 18) {
+            header
+            usageSection
+            apiSection
+            permissionsSection
+            hotKeySection
+            launchSection
+            errorSection
         }
-        .frame(width: 372, height: 560)
+        .padding(18)
+        .frame(width: 372)
         .background(.regularMaterial)
         .onAppear {
             model.refreshUsageSummary()
@@ -209,20 +206,6 @@ struct SettingsView: View {
                 .font(.caption)
                 .foregroundStyle(.orange)
                 .lineLimit(3)
-        }
-    }
-
-    private var footer: some View {
-        HStack {
-            Text(AppConstants.transcriptionModel)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-                .help(AppLogger.shared.logFilePath)
-            Spacer()
-            Button("Quit") {
-                NSApp.terminate(nil)
-            }
-            .controlSize(.small)
         }
     }
 
