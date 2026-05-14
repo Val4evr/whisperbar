@@ -3,12 +3,11 @@ import WhisperBarCore
 
 struct SettingsView: View {
     @ObservedObject var model: AppModel
-    private let controlHeight: CGFloat = 32
-    private let actionButtonLabelWidth: CGFloat = 52
-    private let buttonLabelHeight: CGFloat = 18
-    private let iconButtonLabelWidth: CGFloat = 18
+    private let controlHeight: CGFloat = 34
+    private let actionButtonWidth: CGFloat = 72
+    private let iconButtonWidth: CGFloat = 42
     private let contentWidth: CGFloat = 372
-    private let contentHeight: CGFloat = 560
+    private let contentHeight: CGFloat = 548
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -85,16 +84,16 @@ struct SettingsView: View {
                     Button(role: .destructive) {
                         model.beginAPIKeyRemoval()
                     } label: {
-                        buttonText("Remove")
+                        Text("Remove")
                     }
-                    .controlSize(.small)
+                    .buttonStyle(MenuControlButtonStyle(width: actionButtonWidth, height: controlHeight))
                 } else {
                     Button {
                         model.saveAPIKey()
                     } label: {
-                        buttonText("Save Key")
+                        Text("Save")
                     }
-                    .controlSize(.small)
+                    .buttonStyle(MenuControlButtonStyle(width: actionButtonWidth, height: controlHeight))
                     .disabled(model.apiKeyDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
@@ -172,16 +171,16 @@ struct SettingsView: View {
                 Button {
                     model.isRecordingHotKey.toggle()
                 } label: {
-                    buttonText(model.isRecordingHotKey ? "Press keys..." : "Record")
+                    Text(model.isRecordingHotKey ? "Press..." : "Change")
                 }
-                .controlSize(.small)
+                .buttonStyle(MenuControlButtonStyle(width: actionButtonWidth, height: controlHeight))
+                .help("Change hotkey")
                 Button {
                     model.setHotKey(.defaultToggle)
                 } label: {
                     Image(systemName: "arrow.counterclockwise")
-                        .frame(width: iconButtonLabelWidth, height: buttonLabelHeight)
                 }
-                .controlSize(.small)
+                .buttonStyle(MenuControlButtonStyle(width: iconButtonWidth, height: controlHeight))
                 .help("Reset hotkey")
             }
             .background(HotKeyCaptureView(isRecording: $model.isRecordingHotKey) { hotKey in
@@ -248,10 +247,6 @@ struct SettingsView: View {
         }
     }
 
-    private func buttonText(_ title: String) -> some View {
-        Text(title)
-            .frame(width: actionButtonLabelWidth, height: buttonLabelHeight)
-    }
 }
 
 private struct UsageBarChart: View {
@@ -325,5 +320,27 @@ private struct UsageBarChart: View {
             return String(format: "$%.4f", cost)
         }
         return String(format: "$%.2f", cost)
+    }
+}
+
+private struct MenuControlButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
+    var width: CGFloat
+    var height: CGFloat
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(.caption, design: .rounded).weight(.semibold))
+            .foregroundStyle(isEnabled ? Color.primary : Color.secondary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            .frame(width: width, height: height)
+            .background(backgroundColor(isPressed: configuration.isPressed), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+            .opacity(isEnabled ? 1 : 0.48)
+    }
+
+    private func backgroundColor(isPressed: Bool) -> Color {
+        isPressed ? Color.secondary.opacity(0.28) : Color.secondary.opacity(0.18)
     }
 }
