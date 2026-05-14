@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 import WhisperBarCore
 
@@ -131,13 +132,12 @@ struct SettingsView: View {
                 .background(.quaternary, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
                 .help("API key saved")
         } else {
-            TextField(apiKeyPlaceholder, text: $model.apiKeyDraft)
-                .textFieldStyle(.roundedBorder)
-                .disableAutocorrection(true)
+            PasteFriendlyTextField(
+                text: $model.apiKeyDraft,
+                placeholder: apiKeyPlaceholder,
+                onSubmit: model.saveAPIKey
+            )
                 .frame(height: controlHeight)
-                .onSubmit {
-                    model.saveAPIKey()
-                }
         }
     }
 
@@ -360,5 +360,95 @@ private struct MenuControlButtonStyle: ButtonStyle {
 
     private func backgroundColor(isPressed: Bool) -> Color {
         isPressed ? Color.secondary.opacity(0.28) : Color.secondary.opacity(0.18)
+    }
+}
+
+private struct PasteFriendlyTextField: NSViewRepresentable {
+    @Binding var text: String
+    var placeholder: String
+    var onSubmit: () -> Void
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(text: $text, onSubmit: onSubmit)
+    }
+
+    func makeNSView(context: Context) -> NSTextField {
+        let textField = PastingTextField()
+        textField.delegate = context.coordinator
+        textField.target = context.coordinator
+        textField.action = #selector(Coordinator.submit)
+        textField.isBordered = true
+        textField.isBezeled = true
+        textField.bezelStyle = .roundedBezel
+        textField.isEditable = true
+        textField.isSelectable = true
+        textField.usesSingleLineMode = true
+        textField.lineBreakMode = .byTruncatingTail
+        textField.focusRingType = .default
+        textField.font = NSFont.systemFont(ofSize: NSFont.systemFontSize)
+        textField.placeholderString = placeholder
+        textField.stringValue = text
+        return textField
+    }
+
+    func updateNSView(_ textField: NSTextField, context: Context) {
+        context.coordinator.text = $text
+        context.coordinator.onSubmit = onSubmit
+        textField.placeholderString = placeholder
+        if textField.stringValue != text {
+            textField.stringValue = text
+        }
+    }
+
+    @MainActor
+    final class Coordinator: NSObject, NSTextFieldDelegate {
+        var text: Binding<String>
+        var onSubmit: () -> Void
+
+        init(text: Binding<String>, onSubmit: @escaping () -> Void) {
+            self.text = text
+            self.onSubmit = onSubmit
+        }
+
+        func controlTextDidChange(_ notification: Notification) {
+            guard let textField = notification.object as? NSTextField else { return }
+            text.wrappedValue = textField.stringValue
+        }
+
+        func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
+            guard commandSelector == #selector(NSResponder.insertNewline(_:)) else {
+                return false
+            }
+            text.wrappedValue = textView.string
+            onSubmit()
+            return true
+        }
+
+        @objc func submit(_ sender: NSTextField) {
+            text.wrappedValue = sender.stringValue
+            onSubmit()
+        }
+    }
+}
+
+private final class PastingTextField: NSTextField {
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        guard event.modifierFlags.intersection(.deviceIndependentFlagsMask).contains(.command),
+              event.charactersIgnoringModifiers?.lowercased() == "v" else {
+            return super.performKeyEquivalent(with: event)
+        }
+
+        pasteFromGeneralPasteboard()
+        return true
+    }
+
+    private func pasteFromGeneralPasteboard() {
+        guard let pasted = NSPasteboard.general.string(forType: .string) else { return }
+        if let editor = currentEditor() as? NSTextView {
+            editor.insertText(pasted, replacementRange: editor.selectedRange())
+        } else {
+            stringValue += pasted
+            sendAction(action, to: target)
+        }
     }
 }

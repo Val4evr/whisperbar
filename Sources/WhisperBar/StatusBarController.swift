@@ -17,14 +17,16 @@ final class StatusBarController: NSObject {
     }
 
     func showOnboardingIfNeeded() {
-        guard !model.hasAPIKey else { return }
-        statusItem.button?.contentTintColor = .systemOrange
+        statusItem.button?.contentTintColor = nil
     }
 
     private func configureStatusItem() {
         guard let button = statusItem.button else { return }
-        button.image = NSImage(systemSymbolName: "waveform", accessibilityDescription: "WhisperBar")
+        let image = NSImage(systemSymbolName: "waveform", accessibilityDescription: "WhisperBar")
+        image?.isTemplate = true
+        button.image = image
         button.imagePosition = .imageLeading
+        button.contentTintColor = nil
         button.target = self
         button.action = #selector(togglePopover(_:))
     }
@@ -46,6 +48,7 @@ final class StatusBarController: NSObject {
             model.refreshUsageSummary()
             updatePopoverSize()
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+            NSApp.activate(ignoringOtherApps: true)
             popover.contentViewController?.view.window?.makeKey()
         }
     }
