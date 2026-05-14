@@ -24,7 +24,7 @@ final class AppModel: ObservableObject {
     }
     @Published private(set) var usageSummary = UsageSummary.emptyDay
 
-    private let keychainStore: APIKeyStoring
+    private let apiKeyStore: APIKeyStoring
     private let hotKeyStore: HotKeyStore
     private let apiKeyMetadataStore: APIKeyMetadataStore
     private let usageLedgerStore: UsageLedgerStore
@@ -33,12 +33,12 @@ final class AppModel: ObservableObject {
     weak var hotKeyMonitor: GlobalHotKeyMonitor?
 
     init(
-        keychainStore: APIKeyStoring = FileAPIKeyStore(),
+        apiKeyStore: APIKeyStoring = FileAPIKeyStore(),
         hotKeyStore: HotKeyStore = HotKeyStore(),
         apiKeyMetadataStore: APIKeyMetadataStore = APIKeyMetadataStore(),
         usageLedgerStore: UsageLedgerStore = UsageLedgerStore()
     ) {
-        self.keychainStore = keychainStore
+        self.apiKeyStore = apiKeyStore
         self.hotKeyStore = hotKeyStore
         self.apiKeyMetadataStore = apiKeyMetadataStore
         self.usageLedgerStore = usageLedgerStore
@@ -87,7 +87,7 @@ final class AppModel: ObservableObject {
     }
 
     func readAPIKey() throws -> String? {
-        let apiKey = try keychainStore.readAPIKey()
+        let apiKey = try apiKeyStore.readAPIKey()
         if let apiKey, !apiKey.isEmpty {
             updateAPIKeyMetadata(for: apiKey)
         }
@@ -101,7 +101,7 @@ final class AppModel: ObservableObject {
             return
         }
         do {
-            try keychainStore.saveAPIKey(normalized)
+            try apiKeyStore.saveAPIKey(normalized)
             apiKeyDraft = ""
             isEditingAPIKey = false
             lastError = nil
@@ -113,7 +113,7 @@ final class AppModel: ObservableObject {
 
     func deleteAPIKey() {
         do {
-            try keychainStore.deleteAPIKey()
+            try apiKeyStore.deleteAPIKey()
             apiKeyDraft = ""
             isEditingAPIKey = true
             clearAPIKeyMetadata()

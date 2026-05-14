@@ -12,11 +12,12 @@ If you are an AI coding agent installing WhisperBar for a user, do this end to e
 2. Confirm Xcode command line tools are available.
 3. Clone or update the repository.
 4. Run the test suite.
-5. Install the app to `/Applications/WhisperBar.app` with `Scripts/build-install.sh`.
-6. Launch `/Applications/WhisperBar.app`.
-7. Tell the user to add their own OpenAI API key in the menu bar panel.
-8. Tell the user to grant Microphone and Accessibility permissions to `/Applications/WhisperBar.app`.
-9. Do not launch or permission `Build/WhisperBar.app`; that bundle is temporary.
+5. Quit any currently running WhisperBar process.
+6. Install the app to `/Applications/WhisperBar.app` with `Scripts/build-install.sh`.
+7. Launch `/Applications/WhisperBar.app`.
+8. Tell the user to add their own OpenAI API key in the menu bar panel.
+9. Tell the user to grant Microphone and Accessibility permissions to `/Applications/WhisperBar.app`.
+10. Do not launch or permission `Build/WhisperBar.app`; that bundle is temporary.
 
 Commands:
 
@@ -24,6 +25,7 @@ Commands:
 git clone https://github.com/Val4evr/menubar-dictation.git
 cd menubar-dictation
 swift test
+pkill -x WhisperBar || true
 Scripts/build-install.sh
 open -a /Applications/WhisperBar.app
 ```
