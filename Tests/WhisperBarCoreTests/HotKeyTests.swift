@@ -1,4 +1,5 @@
 import Carbon
+import Foundation
 import Testing
 @testable import WhisperBarCore
 
@@ -23,6 +24,19 @@ struct HotKeyTests {
 
     @Test func displayNameIsReadable() {
         #expect(HotKey.defaultToggle.displayName == "Ctrl + Opt + Space")
+    }
+
+    @Test func storeDefaultsToUnset() {
+        let suiteName = "HotKeyTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let store = HotKeyStore(defaults: defaults)
+
+        #expect(store.load() == nil)
+        store.save(.defaultToggle)
+        #expect(store.load() == .defaultToggle)
+        store.clear()
+        #expect(store.load() == nil)
     }
 
     @Test func legacyHelpMenuShortcutStillRequiresRightShift() {

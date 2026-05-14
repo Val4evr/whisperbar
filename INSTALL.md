@@ -16,8 +16,10 @@ If you are an AI coding agent installing WhisperBar for a user, do this end to e
 6. Install the app to `/Applications/WhisperBar.app` with `Scripts/build-install.sh`.
 7. Launch `/Applications/WhisperBar.app`.
 8. Tell the user to add their own OpenAI API key in the menu bar panel.
-9. Tell the user to grant Microphone and Accessibility permissions to `/Applications/WhisperBar.app`.
-10. Do not launch or permission `Build/WhisperBar.app`; that bundle is temporary.
+9. Tell the user to choose a hotkey. Fresh installs intentionally start with no hotkey configured.
+10. Tell the user to grant Microphone and Accessibility permissions to `/Applications/WhisperBar.app`.
+11. Tell the user that Launch at Login is off by default unless they enable it.
+12. Do not launch or permission `Build/WhisperBar.app`; that bundle is temporary.
 
 Commands:
 
@@ -132,6 +134,16 @@ Add the key in the menu bar panel. After saving, the key is stored locally at:
 ```
 
 The file is written with user-only permissions.
+
+## Hotkey
+
+Fresh installs start with no hotkey configured. Open the menu bar panel and click `Change` to record one. The reset button fills in the suggested shortcut:
+
+```text
+Control + Option + Space
+```
+
+The hotkey is stored in the app's preferences after the user configures it.
 
 ## Updating
 

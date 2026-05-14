@@ -4,7 +4,7 @@ import WhisperBarCore
 
 @MainActor
 final class GlobalHotKeyMonitor {
-    private var hotKey: HotKey
+    private var hotKey: HotKey?
     private let onTrigger: @MainActor () -> Void
     private let onStatusChange: @MainActor (String) -> Void
     private var eventTap: CFMachPort?
@@ -14,7 +14,7 @@ final class GlobalHotKeyMonitor {
     private var rightShiftDown = false
 
     init(
-        hotKey: HotKey,
+        hotKey: HotKey?,
         onTrigger: @escaping @MainActor () -> Void,
         onStatusChange: @escaping @MainActor (String) -> Void
     ) {
@@ -23,13 +23,17 @@ final class GlobalHotKeyMonitor {
         self.onStatusChange = onStatusChange
     }
 
-    func update(hotKey: HotKey) {
+    func update(hotKey: HotKey?) {
         self.hotKey = hotKey
         stop()
         start()
     }
 
     func start() {
+        guard let hotKey else {
+            onStatusChange("Not set")
+            return
+        }
         if hotKey.shiftSide != .right, startCarbonHotKey() {
             return
         }
@@ -58,6 +62,10 @@ final class GlobalHotKeyMonitor {
 
     private func startCarbonHotKey() -> Bool {
         guard carbonHotKeyRef == nil else { return true }
+        guard let hotKey else {
+            onStatusChange("Not set")
+            return false
+        }
 
         var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
         let ref = Unmanaged.passUnretained(self).toOpaque()
@@ -108,6 +116,10 @@ final class GlobalHotKeyMonitor {
 
     private func startEventTapHotKey() {
         guard eventTap == nil else { return }
+        guard let hotKey else {
+            onStatusChange("Not set")
+            return
+        }
         guard AXIsProcessTrusted() else {
             AppLogger.shared.error("Hotkey monitor unavailable: Accessibility permission is not granted")
             onStatusChange("Needs Accessibility")
@@ -166,7 +178,7 @@ final class GlobalHotKeyMonitor {
         }
 
         let carbon = event.flags.carbonModifiers
-        if hotKey.matches(keyCode: keyCode, carbonModifiers: carbon, rightShift: rightShiftDown) {
+        if hotKey?.matches(keyCode: keyCode, carbonModifiers: carbon, rightShift: rightShiftDown) == true {
             AppLogger.shared.info("Global hotkey triggered")
             onTrigger()
             return nil

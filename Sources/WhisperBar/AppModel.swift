@@ -16,7 +16,7 @@ final class AppModel: ObservableObject {
     @Published var isEditingAPIKey = false
     @Published private(set) var hasSavedAPIKey = false
     @Published var hotKeyStatusText = "Checking"
-    @Published var hotKey: HotKey
+    @Published var hotKey: HotKey?
     @Published var isLaunchAtLoginEnabled = false
     @Published var isRecordingHotKey = false
     @Published var selectedUsagePeriod: UsagePeriod = .day {
@@ -57,7 +57,7 @@ final class AppModel: ObservableObject {
     }
 
     var apiKeyInputPlaceholder: String {
-        hasSavedAPIKey ? apiKeySummary : "sk-..."
+        hasSavedAPIKey ? apiKeySummary : "Paste your API key"
     }
 
     var isAPIKeyFieldReadOnly: Bool {
@@ -83,7 +83,7 @@ final class AppModel: ObservableObject {
     }
 
     var hasConfiguredHotKey: Bool {
-        !hotKey.displayName.isEmpty
+        hotKey != nil
     }
 
     func readAPIKey() throws -> String? {
@@ -123,9 +123,25 @@ final class AppModel: ObservableObject {
     }
 
     func loadAPIKeyMetadata() {
-        let metadata = apiKeyMetadataStore.load()
-        apiKeySummary = metadata.redactedKey
-        hasSavedAPIKey = metadata.hasSavedKey
+        do {
+            guard let apiKey = try apiKeyStore.readAPIKey(), !apiKey.isEmpty else {
+                clearAPIKeyMetadata()
+                isEditingAPIKey = true
+                return
+            }
+
+            let metadata = apiKeyMetadataStore.load()
+            if metadata.hasSavedKey {
+                apiKeySummary = metadata.redactedKey
+                hasSavedAPIKey = true
+            } else {
+                updateAPIKeyMetadata(for: apiKey)
+            }
+        } catch {
+            clearAPIKeyMetadata()
+            isEditingAPIKey = true
+            lastError = error.localizedDescription
+        }
     }
 
     private func updateAPIKeyMetadata(for key: String) {
@@ -149,6 +165,10 @@ final class AppModel: ObservableObject {
         self.hotKey = hotKey
         hotKeyStore.save(hotKey)
         hotKeyMonitor?.update(hotKey: hotKey)
+    }
+
+    func resetHotKeyToDefault() {
+        setHotKey(.defaultToggle)
     }
 
     func recordUsage(startedAt: Date, durationSeconds: Double) {

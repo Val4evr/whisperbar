@@ -18,7 +18,7 @@ Scripts/build-install.sh
 open -a /Applications/WhisperBar.app
 ```
 
-Then add your own OpenAI API key in the menu bar panel and grant Microphone/Accessibility permissions to `/Applications/WhisperBar.app`.
+Then add your own OpenAI API key, choose a hotkey, and grant Microphone/Accessibility permissions to `/Applications/WhisperBar.app`.
 
 ## Functionality
 
@@ -44,8 +44,8 @@ The menu bar panel is the only configuration UI:
 - **Cost**: local usage estimate for day, week, or month, with a small bar chart. Hover bars to inspect bucket-level hour/day, estimated audio tokens, minutes, and cost.
 - **OpenAI API Key**: saved keys are shown as a redacted read-only field. Click `Remove` to clear the saved key and enter a replacement.
 - **Permissions**: microphone and Accessibility status.
-- **Hotkey**: current global shortcut, a `Change` button to capture a new shortcut, and a reset button for the default shortcut.
-- **Launch at Login**: macOS login item toggle.
+- **Hotkey**: current global shortcut, a `Change` button to capture a shortcut, and a reset button that fills in `Control + Option + Space`.
+- **Launch at Login**: macOS login item toggle. It is off by default.
 
 Section icons use status color:
 
@@ -54,7 +54,7 @@ Section icons use status color:
 
 ## Hotkey
 
-Default toggle:
+Fresh installs start with no hotkey configured. Use `Change` to record one, or press the reset button to fill in the suggested shortcut:
 
 ```text
 Control + Option + Space

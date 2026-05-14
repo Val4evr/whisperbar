@@ -133,7 +133,6 @@ struct SettingsView: View {
         } else {
             TextField(apiKeyPlaceholder, text: $model.apiKeyDraft)
                 .textFieldStyle(.roundedBorder)
-                .textContentType(.password)
                 .disableAutocorrection(true)
                 .frame(height: controlHeight)
                 .onSubmit {
@@ -181,7 +180,7 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 8) {
             sectionTitle("Hotkey", systemImage: "keyboard", isHealthy: model.hasConfiguredHotKey)
             HStack {
-                Text(model.hotKey.displayName)
+                Text(model.hotKey?.displayName ?? "Not set")
                     .font(.system(.caption, design: .rounded).weight(.medium))
                     .padding(.horizontal, 8)
                     .frame(height: controlHeight)
@@ -195,7 +194,7 @@ struct SettingsView: View {
                 .buttonStyle(MenuControlButtonStyle(width: actionButtonWidth, height: controlHeight))
                 .help("Change hotkey")
                 Button {
-                    model.setHotKey(.defaultToggle)
+                    model.resetHotKeyToDefault()
                 } label: {
                     Image(systemName: "arrow.counterclockwise")
                 }
