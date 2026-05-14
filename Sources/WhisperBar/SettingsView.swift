@@ -4,10 +4,11 @@ import WhisperBarCore
 struct SettingsView: View {
     @ObservedObject var model: AppModel
     private let controlHeight: CGFloat = 32
-    private let actionButtonWidth: CGFloat = 68
-    private let iconButtonWidth: CGFloat = 42
+    private let actionButtonLabelWidth: CGFloat = 52
+    private let buttonLabelHeight: CGFloat = 18
+    private let iconButtonLabelWidth: CGFloat = 18
     private let contentWidth: CGFloat = 372
-    private let contentHeight: CGFloat = 500
+    private let contentHeight: CGFloat = 560
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -22,9 +23,8 @@ struct SettingsView: View {
             launchSection
             errorSection
         }
-        .frame(width: contentWidth - 44, height: contentHeight - 44)
         .padding(22)
-        .frame(width: contentWidth, height: contentHeight)
+        .frame(width: contentWidth, height: contentHeight, alignment: .topLeading)
         .background(.regularMaterial)
         .onAppear {
             model.refreshUsageSummary()
@@ -179,7 +179,7 @@ struct SettingsView: View {
                     model.setHotKey(.defaultToggle)
                 } label: {
                     Image(systemName: "arrow.counterclockwise")
-                        .frame(width: iconButtonWidth, height: controlHeight)
+                        .frame(width: iconButtonLabelWidth, height: buttonLabelHeight)
                 }
                 .controlSize(.small)
                 .help("Reset hotkey")
@@ -250,7 +250,7 @@ struct SettingsView: View {
 
     private func buttonText(_ title: String) -> some View {
         Text(title)
-            .frame(width: actionButtonWidth, height: controlHeight)
+            .frame(width: actionButtonLabelWidth, height: buttonLabelHeight)
     }
 }
 
