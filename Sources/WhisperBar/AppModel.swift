@@ -18,10 +18,15 @@ final class AppModel: ObservableObject {
     @Published var hotKey: HotKey
     @Published var isLaunchAtLoginEnabled = false
     @Published var isRecordingHotKey = false
+    @Published var selectedUsagePeriod: UsagePeriod = .day {
+        didSet { refreshUsageSummary() }
+    }
+    @Published private(set) var usageSummary = UsageSummary.emptyDay
 
     private let keychainStore: APIKeyStoring
     private let hotKeyStore: HotKeyStore
     private let apiKeyMetadataStore: APIKeyMetadataStore
+    private let usageLedgerStore: UsageLedgerStore
 
     weak var dictationController: DictationController?
     weak var hotKeyMonitor: GlobalHotKeyMonitor?
@@ -29,13 +34,16 @@ final class AppModel: ObservableObject {
     init(
         keychainStore: APIKeyStoring = FileAPIKeyStore(),
         hotKeyStore: HotKeyStore = HotKeyStore(),
-        apiKeyMetadataStore: APIKeyMetadataStore = APIKeyMetadataStore()
+        apiKeyMetadataStore: APIKeyMetadataStore = APIKeyMetadataStore(),
+        usageLedgerStore: UsageLedgerStore = UsageLedgerStore()
     ) {
         self.keychainStore = keychainStore
         self.hotKeyStore = hotKeyStore
         self.apiKeyMetadataStore = apiKeyMetadataStore
+        self.usageLedgerStore = usageLedgerStore
         self.hotKey = hotKeyStore.load()
         loadAPIKeyMetadata()
+        refreshUsageSummary()
         refreshLaunchAtLogin()
     }
 
@@ -113,6 +121,21 @@ final class AppModel: ObservableObject {
         self.hotKey = hotKey
         hotKeyStore.save(hotKey)
         hotKeyMonitor?.update(hotKey: hotKey)
+    }
+
+    func recordUsage(startedAt: Date, durationSeconds: Double) {
+        guard durationSeconds > 0 else { return }
+        do {
+            try usageLedgerStore.record(UsageEntry(startedAt: startedAt, durationSeconds: durationSeconds))
+            refreshUsageSummary()
+        } catch {
+            lastError = error.localizedDescription
+            AppLogger.shared.error("Failed to record usage: \(error.localizedDescription)")
+        }
+    }
+
+    func refreshUsageSummary() {
+        usageSummary = UsageSummary(period: selectedUsagePeriod, entries: usageLedgerStore.load())
     }
 
     func requestMicrophonePermission() {

@@ -5,24 +5,28 @@ struct SettingsView: View {
     @ObservedObject var model: AppModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            header
-            Divider()
-            apiSection
-            permissionsSection
-            hotKeySection
-            launchSection
-            errorSection
-            Spacer(minLength: 0)
-            footer
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                header
+                usageSection
+                apiSection
+                permissionsSection
+                hotKeySection
+                launchSection
+                errorSection
+                footer
+            }
+            .padding(18)
         }
-        .padding(18)
-        .frame(width: 360)
+        .frame(width: 372, height: 560)
         .background(.regularMaterial)
+        .onAppear {
+            model.refreshUsageSummary()
+        }
     }
 
     private var header: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             Image(systemName: "waveform.circle.fill")
                 .font(.system(size: 28, weight: .semibold))
                 .foregroundStyle(model.isRecording ? .red : Color.accentColor)
@@ -35,18 +39,59 @@ struct SettingsView: View {
                     .lineLimit(1)
             }
             Spacer()
-            Button {
-                model.dictationController?.toggleDictation()
-            } label: {
-                Image(systemName: model.isRecording ? "stop.fill" : "mic.fill")
-            }
-            .buttonStyle(.borderedProminent)
-            .help(model.isRecording ? "Stop dictation" : "Start dictation")
         }
     }
 
+    private var usageSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Label("Cost", systemImage: "chart.bar.fill")
+                    .font(.subheadline.weight(.semibold))
+                Spacer()
+                Picker("Range", selection: $model.selectedUsagePeriod) {
+                    ForEach(UsagePeriod.allCases) { period in
+                        Text(period.title).tag(period)
+                    }
+                }
+                .labelsHidden()
+                .pickerStyle(.segmented)
+                .controlSize(.small)
+                .frame(width: 168)
+            }
+
+            HStack(spacing: 8) {
+                metric("Tokens", value: tokenString(model.usageSummary.estimatedAudioTokens))
+                metric("Minutes", value: minutesString(model.usageSummary.durationSeconds))
+                metric("Cost", value: costString(model.usageSummary.estimatedCostUSD))
+            }
+
+            UsageBarChart(buckets: model.usageSummary.buckets)
+                .frame(height: 54)
+
+            Text("Estimated from local dictation duration at $0.017/min.")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+        }
+    }
+
+    private func metric(_ title: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.system(.callout, design: .rounded).weight(.semibold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(.quaternary, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+    }
+
     private var apiSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             Label("OpenAI API Key", systemImage: "key.fill")
                 .font(.subheadline.weight(.semibold))
             HStack {
@@ -66,10 +111,13 @@ struct SettingsView: View {
                 .onSubmit {
                     model.saveAPIKey()
                 }
-            Button("Save Key") {
-                model.saveAPIKey()
+            HStack {
+                Spacer()
+                Button("Save Key") {
+                    model.saveAPIKey()
+                }
+                .disabled(model.apiKeyDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
-            .disabled(model.apiKeyDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         }
     }
 
@@ -96,8 +144,14 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            Button("Allow", action: action)
-                .controlSize(.small)
+            if status == "Allowed" {
+                Label("Allowed", systemImage: "checkmark.circle.fill")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.green)
+            } else {
+                Button("Allow", action: action)
+                    .controlSize(.small)
+            }
         }
     }
 
@@ -135,13 +189,17 @@ struct SettingsView: View {
     }
 
     private var launchSection: some View {
-        Toggle(isOn: Binding(
-            get: { model.isLaunchAtLoginEnabled },
-            set: { model.setLaunchAtLogin($0) }
-        )) {
+        HStack {
             Label("Launch at Login", systemImage: "power")
+                .font(.subheadline.weight(.semibold))
+            Spacer()
+            Toggle("", isOn: Binding(
+                get: { model.isLaunchAtLoginEnabled },
+                set: { model.setLaunchAtLogin($0) }
+            ))
+            .labelsHidden()
+            .toggleStyle(.switch)
         }
-        .font(.subheadline.weight(.semibold))
     }
 
     @ViewBuilder
@@ -165,6 +223,54 @@ struct SettingsView: View {
                 NSApp.terminate(nil)
             }
             .controlSize(.small)
+        }
+    }
+
+    private func tokenString(_ tokens: Int) -> String {
+        if tokens >= 1_000 {
+            return String(format: "%.1fk", Double(tokens) / 1_000)
+        }
+        return "\(tokens)"
+    }
+
+    private func minutesString(_ seconds: Double) -> String {
+        String(format: "%.1f", seconds / 60)
+    }
+
+    private func costString(_ cost: Double) -> String {
+        if cost < 0.01 {
+            return String(format: "$%.4f", cost)
+        }
+        return String(format: "$%.2f", cost)
+    }
+}
+
+private struct UsageBarChart: View {
+    var buckets: [UsageBucket]
+
+    private var maxSeconds: Double {
+        max(1, buckets.map(\.durationSeconds).max() ?? 0)
+    }
+
+    var body: some View {
+        VStack(spacing: 4) {
+            HStack(alignment: .bottom, spacing: 3) {
+                ForEach(Array(buckets.enumerated()), id: \.offset) { _, bucket in
+                    RoundedRectangle(cornerRadius: 2, style: .continuous)
+                        .fill(bucket.durationSeconds > 0 ? Color.accentColor : Color.secondary.opacity(0.18))
+                        .frame(height: max(4, 38 * bucket.durationSeconds / maxSeconds))
+                        .frame(maxWidth: .infinity)
+                }
+            }
+            HStack(spacing: 3) {
+                ForEach(Array(buckets.enumerated()), id: \.offset) { _, bucket in
+                    Text(bucket.label)
+                        .font(.system(size: 8, weight: .medium, design: .rounded))
+                        .foregroundStyle(.tertiary)
+                        .frame(maxWidth: .infinity)
+                }
+            }
+            .frame(height: 10)
         }
     }
 }

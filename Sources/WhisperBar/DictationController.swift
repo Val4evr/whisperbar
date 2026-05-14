@@ -11,6 +11,8 @@ final class DictationController: NSObject {
     private var realtimeClient: RealtimeTranscriptionClient?
     private var finalTranscripts: [String] = []
     private var audioBytesSent = 0
+    private var recordingStartedAt: Date?
+    private var didRecordUsageForCurrentSession = false
 
     init(model: AppModel, pillController: PillWindowController) {
         self.model = model
@@ -30,6 +32,7 @@ final class DictationController: NSObject {
         audioCapture.stop()
         realtimeClient?.disconnect()
         realtimeClient = nil
+        recordUsageIfNeeded()
         pillController.hide()
         model.isRecording = false
     }
@@ -52,6 +55,8 @@ final class DictationController: NSObject {
 
             finalTranscripts = []
             audioBytesSent = 0
+            recordingStartedAt = Date()
+            didRecordUsageForCurrentSession = false
             model.audioLevel = 0
             model.liveTranscript = ""
             model.lastError = nil
@@ -87,6 +92,7 @@ final class DictationController: NSObject {
         model.statusText = "Finishing"
         audioCapture.stop()
         model.audioLevel = 0
+        recordUsageIfNeeded()
         if audioBytesSent >= 4_800 {
             realtimeClient?.commit()
         }
@@ -122,6 +128,14 @@ final class DictationController: NSObject {
             return completed
         }
         return model.liveTranscript.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func recordUsageIfNeeded() {
+        guard !didRecordUsageForCurrentSession, let recordingStartedAt else { return }
+        let duration = Date().timeIntervalSince(recordingStartedAt)
+        didRecordUsageForCurrentSession = true
+        self.recordingStartedAt = nil
+        model.recordUsage(startedAt: recordingStartedAt, durationSeconds: duration)
     }
 }
 
