@@ -10,7 +10,7 @@ struct SettingsView: View {
     private let contentHeight: CGFloat = 548
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 12) {
             usageSection
             Divider()
             apiSection
@@ -31,7 +31,7 @@ struct SettingsView: View {
     }
 
     private var usageSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
             sectionTitle("Cost", systemImage: "chart.bar.fill", isHealthy: model.hasUsage)
 
             HStack(spacing: 8) {
@@ -40,11 +40,10 @@ struct SettingsView: View {
                 metricCard("Cost", value: costString(model.usageSummary.estimatedCostUSD))
                 periodCard
             }
-            .padding(.top, 2)
-            .padding(.bottom, 10)
+            .padding(.bottom, 8)
 
             UsageBarChart(period: model.selectedUsagePeriod, buckets: model.usageSummary.buckets)
-                .frame(height: 70)
+                .frame(height: 62)
         }
     }
 
@@ -63,7 +62,7 @@ struct SettingsView: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
         }
-        .frame(maxWidth: .infinity, minHeight: 72, alignment: .center)
+        .frame(maxWidth: .infinity, minHeight: 64, alignment: .center)
         .padding(.horizontal, 10)
         .background(.quaternary, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
@@ -89,7 +88,7 @@ struct SettingsView: View {
             }
         }
         .padding(.horizontal, 7)
-        .frame(maxWidth: .infinity, minHeight: 72)
+        .frame(maxWidth: .infinity, minHeight: 64)
         .background(.quaternary, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 
