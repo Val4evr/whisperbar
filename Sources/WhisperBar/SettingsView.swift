@@ -7,7 +7,7 @@ struct SettingsView: View {
     private let actionButtonWidth: CGFloat = 72
     private let iconButtonWidth: CGFloat = 42
     private let contentWidth: CGFloat = 372
-    private let contentHeight: CGFloat = 548
+    private let contentHeight: CGFloat = 568
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -32,33 +32,23 @@ struct SettingsView: View {
 
     private var usageSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                sectionTitle("Cost", systemImage: "chart.bar.fill", isHealthy: model.hasUsage)
-                Spacer()
-                Picker("Range", selection: $model.selectedUsagePeriod) {
-                    ForEach(UsagePeriod.allCases) { period in
-                        Text(period.title).tag(period)
-                    }
-                }
-                .labelsHidden()
-                .pickerStyle(.segmented)
-                .controlSize(.small)
-                .frame(width: 168)
-            }
+            sectionTitle("Cost", systemImage: "chart.bar.fill", isHealthy: model.hasUsage)
 
             HStack(spacing: 8) {
-                metric("Tokens", value: tokenString(model.usageSummary.estimatedAudioTokens))
-                metric("Minutes", value: minutesString(model.usageSummary.durationSeconds))
-                metric("Cost", value: costString(model.usageSummary.estimatedCostUSD))
+                periodCard
+                metricCard("Tokens", value: tokenString(model.usageSummary.estimatedAudioTokens))
+                metricCard("Minutes", value: minutesString(model.usageSummary.durationSeconds))
+                metricCard("Cost", value: costString(model.usageSummary.estimatedCostUSD))
             }
-            .padding(.bottom, 8)
+            .padding(.top, 2)
+            .padding(.bottom, 10)
 
             UsageBarChart(period: model.selectedUsagePeriod, buckets: model.usageSummary.buckets)
                 .frame(height: 70)
         }
     }
 
-    private func metric(_ title: String, value: String) -> some View {
+    private func metricCard(_ title: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(title)
                 .font(.caption2)
@@ -68,9 +58,33 @@ struct SettingsView: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, minHeight: 72, alignment: .leading)
         .padding(.horizontal, 10)
-        .padding(.vertical, 8)
+        .background(.quaternary, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+    }
+
+    private var periodCard: some View {
+        VStack(spacing: 2) {
+            ForEach(UsagePeriod.allCases) { period in
+                Button {
+                    model.selectedUsagePeriod = period
+                } label: {
+                    Text(period.title)
+                        .font(.system(size: 11, weight: .semibold, design: .rounded))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
+                        .frame(maxWidth: .infinity, minHeight: 18)
+                        .foregroundStyle(model.selectedUsagePeriod == period ? Color.white : Color.secondary)
+                        .background(
+                            model.selectedUsagePeriod == period ? Color.accentColor : Color.clear,
+                            in: RoundedRectangle(cornerRadius: 5, style: .continuous)
+                        )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, 7)
+        .frame(maxWidth: .infinity, minHeight: 72)
         .background(.quaternary, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 
