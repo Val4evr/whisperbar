@@ -4,6 +4,10 @@ WhisperBar is a small native macOS menu bar dictation app. It is intentionally n
 
 The app talks directly to the OpenAI API from the Mac. There is no backend, account sync, model picker, endpoint picker, or developer settings surface.
 
+![WhisperBar menu bar panel](Assets/menu-panel.png)
+
+![WhisperBar live dictation pill](Assets/dictation-pill.png)
+
 ## Install
 
 Official install path for now: point a coding agent at [INSTALL.md](INSTALL.md) and ask it to install WhisperBar from source.
