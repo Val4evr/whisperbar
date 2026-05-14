@@ -13,6 +13,7 @@ final class AppModel: ObservableObject {
     @Published var lastError: String?
     @Published var apiKeyDraft = ""
     @Published var apiKeySummary = "Not set"
+    @Published var isEditingAPIKey = false
     @Published private(set) var hasSavedAPIKey = false
     @Published var hotKeyStatusText = "Checking"
     @Published var hotKey: HotKey
@@ -55,6 +56,10 @@ final class AppModel: ObservableObject {
         hasSavedAPIKey ? apiKeySummary : "sk-..."
     }
 
+    var isAPIKeyFieldReadOnly: Bool {
+        hasSavedAPIKey && !isEditingAPIKey
+    }
+
     var microphoneStatusText: String {
         switch AVCaptureDevice.authorizationStatus(for: .audio) {
         case .authorized: return "Allowed"
@@ -67,6 +72,10 @@ final class AppModel: ObservableObject {
 
     var accessibilityStatusText: String {
         AXIsProcessTrusted() ? "Allowed" : "Needs permission"
+    }
+
+    var hasRequiredPermissions: Bool {
+        microphoneStatusText == "Allowed" && accessibilityStatusText == "Allowed"
     }
 
     func readAPIKey() throws -> String? {
@@ -86,6 +95,7 @@ final class AppModel: ObservableObject {
         do {
             try keychainStore.saveAPIKey(normalized)
             apiKeyDraft = ""
+            isEditingAPIKey = false
             lastError = nil
             updateAPIKeyMetadata(for: normalized)
         } catch {
@@ -97,6 +107,7 @@ final class AppModel: ObservableObject {
         do {
             try keychainStore.deleteAPIKey()
             apiKeyDraft = ""
+            isEditingAPIKey = true
             clearAPIKeyMetadata()
         } catch {
             lastError = error.localizedDescription
@@ -120,6 +131,10 @@ final class AppModel: ObservableObject {
         apiKeySummary = "Not set"
         hasSavedAPIKey = false
         apiKeyMetadataStore.clear()
+    }
+
+    func beginAPIKeyRemoval() {
+        deleteAPIKey()
     }
 
     func setHotKey(_ hotKey: HotKey) {

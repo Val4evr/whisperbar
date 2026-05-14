@@ -99,17 +99,11 @@ struct SettingsView: View {
             Label("OpenAI API Key", systemImage: "key.fill")
                 .font(.subheadline.weight(.semibold))
             HStack {
-                TextField(apiKeyPlaceholder, text: $model.apiKeyDraft)
-                    .textFieldStyle(.roundedBorder)
-                    .textContentType(.password)
-                    .disableAutocorrection(true)
-                    .onSubmit {
-                        model.saveAPIKey()
-                    }
+                apiKeyField
 
-                if model.apiKeyDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, model.hasAPIKey {
+                if model.isAPIKeyFieldReadOnly {
                     Button("Remove", role: .destructive) {
-                        model.deleteAPIKey()
+                        model.beginAPIKeyRemoval()
                     }
                     .controlSize(.small)
                 } else {
@@ -123,10 +117,40 @@ struct SettingsView: View {
         }
     }
 
+    @ViewBuilder
+    private var apiKeyField: some View {
+        if model.isAPIKeyFieldReadOnly {
+            Text(model.apiKeySummary)
+                .font(.system(.body, design: .rounded).weight(.medium))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, minHeight: 28, alignment: .leading)
+                .padding(.horizontal, 8)
+                .background(.quaternary, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .strokeBorder(.green.opacity(0.72), lineWidth: 1)
+                }
+                .help("API key saved")
+        } else {
+            TextField(apiKeyPlaceholder, text: $model.apiKeyDraft)
+                .textFieldStyle(.roundedBorder)
+                .textContentType(.password)
+                .disableAutocorrection(true)
+                .onSubmit {
+                    model.saveAPIKey()
+                }
+        }
+    }
+
     private var permissionsSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Label("Permissions", systemImage: "checkmark.shield.fill")
-                .font(.subheadline.weight(.semibold))
+            HStack(spacing: 8) {
+                Image(systemName: "checkmark.shield.fill")
+                    .foregroundStyle(model.hasRequiredPermissions ? .green : .primary)
+                Text("Permissions")
+            }
+            .font(.subheadline.weight(.semibold))
             permissionRow(title: "Microphone", status: model.microphoneStatusText) {
                 model.requestMicrophonePermission()
             }
