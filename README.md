@@ -20,6 +20,8 @@ open -a /Applications/WhisperBar.app
 
 Then add your own OpenAI API key, choose a hotkey, and grant Microphone/Accessibility permissions to `/Applications/WhisperBar.app`.
 
+WhisperBar is a menu bar app. It will not appear in the Dock, and that is intentional. Look for the waveform icon in the menu bar after launching it.
+
 ## Functionality
 
 - Lives only in the macOS menu bar. It does not show a Dock icon.
