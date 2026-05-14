@@ -35,10 +35,10 @@ struct SettingsView: View {
             sectionTitle("Cost", systemImage: "chart.bar.fill", isHealthy: model.hasUsage)
 
             HStack(spacing: 8) {
-                periodCard
                 metricCard("Tokens", value: tokenString(model.usageSummary.estimatedAudioTokens))
                 metricCard("Minutes", value: minutesString(model.usageSummary.durationSeconds))
                 metricCard("Cost", value: costString(model.usageSummary.estimatedCostUSD))
+                periodCard
             }
             .padding(.top, 2)
             .padding(.bottom, 10)
@@ -49,16 +49,18 @@ struct SettingsView: View {
     }
 
     private func metricCard(_ title: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(spacing: 7) {
             Text(title)
                 .font(.caption2)
                 .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
             Text(value)
                 .font(.system(.callout, design: .rounded).weight(.semibold))
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
         }
-        .frame(maxWidth: .infinity, minHeight: 72, alignment: .leading)
+        .frame(maxWidth: .infinity, minHeight: 72, alignment: .center)
         .padding(.horizontal, 10)
         .background(.quaternary, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
