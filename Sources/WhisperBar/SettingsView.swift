@@ -6,6 +6,8 @@ struct SettingsView: View {
     private let controlHeight: CGFloat = 32
     private let actionButtonWidth: CGFloat = 68
     private let iconButtonWidth: CGFloat = 42
+    private let contentWidth: CGFloat = 372
+    private let contentHeight: CGFloat = 500
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -20,10 +22,9 @@ struct SettingsView: View {
             launchSection
             errorSection
         }
-        .padding(.horizontal, 22)
-        .padding(.top, 34)
-        .padding(.bottom, 34)
-        .frame(width: 372, height: 516)
+        .frame(width: contentWidth - 44, height: contentHeight - 44)
+        .padding(22)
+        .frame(width: contentWidth, height: contentHeight)
         .background(.regularMaterial)
         .onAppear {
             model.refreshUsageSummary()
@@ -81,17 +82,19 @@ struct SettingsView: View {
                 apiKeyField
 
                 if model.isAPIKeyFieldReadOnly {
-                    Button("Remove", role: .destructive) {
+                    Button(role: .destructive) {
                         model.beginAPIKeyRemoval()
+                    } label: {
+                        buttonText("Remove")
                     }
                     .controlSize(.small)
-                    .frame(width: actionButtonWidth, height: controlHeight)
                 } else {
-                    Button("Save Key") {
+                    Button {
                         model.saveAPIKey()
+                    } label: {
+                        buttonText("Save Key")
                     }
                     .controlSize(.small)
-                    .frame(width: actionButtonWidth, height: controlHeight)
                     .disabled(model.apiKeyDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
@@ -166,18 +169,19 @@ struct SettingsView: View {
                     .frame(height: controlHeight)
                     .background(.quaternary, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
                 Spacer()
-                Button(model.isRecordingHotKey ? "Press keys..." : "Record") {
+                Button {
                     model.isRecordingHotKey.toggle()
+                } label: {
+                    buttonText(model.isRecordingHotKey ? "Press keys..." : "Record")
                 }
                 .controlSize(.small)
-                .frame(width: actionButtonWidth, height: controlHeight)
                 Button {
                     model.setHotKey(.defaultToggle)
                 } label: {
                     Image(systemName: "arrow.counterclockwise")
+                        .frame(width: iconButtonWidth, height: controlHeight)
                 }
                 .controlSize(.small)
-                .frame(width: iconButtonWidth, height: controlHeight)
                 .help("Reset hotkey")
             }
             .background(HotKeyCaptureView(isRecording: $model.isRecordingHotKey) { hotKey in
@@ -242,6 +246,11 @@ struct SettingsView: View {
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.primary)
         }
+    }
+
+    private func buttonText(_ title: String) -> some View {
+        Text(title)
+            .frame(width: actionButtonWidth, height: controlHeight)
     }
 }
 
