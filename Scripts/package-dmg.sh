@@ -30,8 +30,13 @@ stage_finder_layout() {
 
   if ! /usr/bin/osascript >/dev/null <<APPLESCRIPT
 set dmgFolder to POSIX file "$volume_root" as alias
+set applicationsFolder to POSIX file "/Applications" as alias
 
 tell application "Finder"
+  if not (exists item "Applications" of dmgFolder) then
+    make new alias file at dmgFolder to applicationsFolder with properties {name:"Applications"}
+  end if
+
   open dmgFolder
   delay 0.75
 
@@ -101,7 +106,6 @@ hdiutil attach "$RW_DMG" \
 MOUNTED=1
 
 ditto "$CLEAN_APP" "$MOUNT_POINT/WhisperBar.app"
-ln -s /Applications "$MOUNT_POINT/Applications"
 stage_finder_layout "$MOUNT_POINT"
 sync
 hdiutil detach "$MOUNT_POINT" >/dev/null

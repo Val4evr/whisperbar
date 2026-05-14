@@ -2,6 +2,12 @@
 
 ## 0.1.3 - 2026-05-14
 
+DMG target icon fix.
+
+- Use a Finder alias for the Applications drop target instead of a Unix symlink.
+
+## 0.1.4 - 2026-05-14
+
 Packaging polish.
 
 - Package the DMG with a small drag-to-Applications Finder window.
