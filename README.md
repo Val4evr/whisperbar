@@ -1,32 +1,229 @@
 # WhisperBar
 
-WhisperBar is a tiny native macOS menu bar dictation app. It streams microphone audio to OpenAI's Realtime transcription API with `gpt-realtime-whisper`, shows a compact live dictation pill, pastes the final transcript into the currently focused app, and restores your previous clipboard afterward.
+WhisperBar is a small native macOS menu bar dictation app. It is intentionally narrow: press the global hotkey, speak, watch a floating transcript pill, then let the app paste the final transcript into the currently focused field.
 
-## Build
+The app talks directly to the OpenAI API from the Mac. There is no backend, account sync, model picker, endpoint picker, or developer settings surface.
+
+## Functionality
+
+- Lives only in the macOS menu bar. It does not show a Dock icon.
+- Streams microphone audio to OpenAI Realtime transcription with `gpt-realtime-whisper`.
+- Shows a floating, draggable, non-activating dictation pill while recording/finalizing.
+- Displays live transcript deltas while speaking.
+- Uses final completed transcript events for the pasted text when available.
+- Pastes into the currently focused app with a synthetic `Cmd+V`.
+- Preserves clipboard history:
+  - snapshots the current pasteboard,
+  - writes the dictated text,
+  - sends paste,
+  - restores the previous pasteboard after a short delay.
+- Stores the OpenAI API key locally in a user-only app support file.
+- Tracks local usage by dictation duration and estimates cost for day/week/month.
+- Supports launch at login.
+
+## Menu Bar Panel
+
+The menu bar panel is the only configuration UI:
+
+- **Cost**: local usage estimate for day, week, or month, with a small bar chart. Hover bars to inspect bucket-level hour/day, estimated audio tokens, minutes, and cost.
+- **OpenAI API Key**: saved keys are shown as a redacted read-only field. Click `Remove` to clear the saved key and enter a replacement.
+- **Permissions**: microphone and Accessibility status.
+- **Hotkey**: current global shortcut and recorder.
+- **Launch at Login**: macOS login item toggle.
+
+Section icons use status color:
+
+- Green means configured/available/enabled.
+- Red means missing, empty, or disabled.
+
+## Hotkey
+
+Default toggle:
+
+```text
+Control + Option + Space
+```
+
+WhisperBar uses Carbon global hotkey registration for normal shortcuts. Accessibility permission is still required for the paste step and for the legacy right-shift-aware event tap path.
+
+## Permissions
+
+Grant permissions to the stable installed app:
+
+```text
+/Applications/WhisperBar.app
+```
+
+Avoid granting permissions to `Build/WhisperBar.app` during normal testing. That bundle is temporary, and macOS may treat it as a different app identity across rebuilds.
+
+Required permissions:
+
+- **Microphone**: records dictation audio.
+- **Accessibility**: sends the paste keystroke to the focused app.
+
+## Local Files
+
+WhisperBar keeps its state local:
+
+```text
+~/Library/Application Support/WhisperBar/openai.key
+~/Library/Application Support/WhisperBar/api-key.json
+~/Library/Application Support/WhisperBar/usage.json
+~/Library/Logs/WhisperBar/WhisperBar.log
+```
+
+The API key file is written with user-only permissions (`0600`).
+
+## Cost Accounting
+
+OpenAI bills `gpt-realtime-whisper` by audio duration. WhisperBar records local dictation durations and estimates:
+
+- audio tokens at `10 tokens/second`,
+- minutes from local recording duration,
+- cost at `$0.017/minute`.
+
+This is a local estimate, not a billing API integration.
+
+## Development
+
+Requirements:
+
+- macOS 14+
+- Swift 6 toolchain
+- Xcode command line tools
+- Apple Development signing identity for stable installs
+
+Run tests:
 
 ```sh
 swift test
-Scripts/build-app.sh
-open Build/WhisperBar.app
 ```
 
-The app stores your OpenAI API key in a user-only app support file. The app bundle includes microphone and Apple Events usage descriptions and runs as an accessory app, so it does not show in the Dock.
+Build a local app bundle:
 
-For day-to-day testing, install a consistently signed copy:
+```sh
+Scripts/build-app.sh
+```
+
+This creates:
+
+```text
+Build/WhisperBar.app
+```
+
+Use this only for quick bundle inspection. For actual app testing, install the signed `/Applications` copy.
+
+## Stable Local Install
+
+For day-to-day testing:
 
 ```sh
 Scripts/build-install.sh
 open /Applications/WhisperBar.app
 ```
 
-The first signed install may ask for access to your Apple Development signing key while building. Choose Always Allow for `codesign`; after that, macOS permissions should survive app updates because the bundle identifier and signing identity stay stable.
+`Scripts/build-install.sh`:
 
-## Default Hotkey
+1. Builds the release executable.
+2. Creates `Build/WhisperBar.app`.
+3. Copies it through a metadata-stripping archive step.
+4. Signs the clean copy with an Apple Development identity.
+5. Verifies the signature.
+6. Replaces `/Applications/WhisperBar.app`.
+7. Verifies the installed app.
 
-The default toggle is `Control + Option + Space`. Global hotkey handling requires Accessibility permission.
+By default, the script uses the first `Apple Development:` codesigning identity returned by:
 
-## Notes
+```sh
+security find-identity -v -p codesigning
+```
 
-- The model and endpoint are intentionally fixed to `gpt-realtime-whisper`.
-- There is no backend. API traffic goes directly from your Mac to OpenAI.
-- Clipboard restoration is delayed slightly so clipboard-history tools can observe the dictated text before the prior clipboard content is restored.
+Override it with:
+
+```sh
+WHISPERBAR_CODESIGN_IDENTITY="Apple Development: Name (TEAMID)" Scripts/build-install.sh
+```
+
+The first run may prompt for access to the private signing key. Choose **Always Allow** for `codesign`; after that, permissions should survive app updates because the bundle identifier and signing identity remain stable.
+
+## Release Flow
+
+Current personal release flow:
+
+```sh
+swift test
+Scripts/build-install.sh
+open /Applications/WhisperBar.app
+```
+
+Then manually verify:
+
+- menu bar panel opens below the menu bar and is not clipped,
+- API key field is read-only when saved,
+- microphone and Accessibility permissions are green,
+- hotkey toggles dictation,
+- pill appears and is draggable,
+- transcript streams,
+- stopping dictation pastes into the focused field,
+- prior clipboard is restored,
+- usage minutes/cost update in the menu.
+
+Before pushing:
+
+```sh
+git status --short
+git diff
+git add <changed-files>
+git commit -m "<message>"
+git push
+```
+
+## Troubleshooting
+
+If macOS asks for permissions again, confirm that the running app is:
+
+```text
+/Applications/WhisperBar.app
+```
+
+not:
+
+```text
+Build/WhisperBar.app
+```
+
+Check the running process:
+
+```sh
+pgrep -fl WhisperBar
+```
+
+Check the installed signature:
+
+```sh
+codesign --verify --deep --strict --verbose=2 /Applications/WhisperBar.app
+codesign -dv --verbose=4 /Applications/WhisperBar.app
+```
+
+Read logs:
+
+```sh
+tail -100 ~/Library/Logs/WhisperBar/WhisperBar.log
+```
+
+If signing fails with resource fork/Finder metadata errors, rerun:
+
+```sh
+Scripts/build-install.sh
+```
+
+The build scripts strip extended attributes from the temporary and installed bundles.
+
+## Non-Goals
+
+- No model picker.
+- No endpoint picker.
+- No provider abstraction.
+- No generic developer/debug settings in the app UI.
+- No backend or ephemeral-token service for v1.
+- No file transcription workflow yet.
