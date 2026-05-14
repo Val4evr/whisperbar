@@ -6,8 +6,6 @@ struct SettingsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            header
-            Divider()
             usageSection
             Divider()
             apiSection
@@ -22,27 +20,10 @@ struct SettingsView: View {
         .padding(.horizontal, 22)
         .padding(.top, 24)
         .padding(.bottom, 26)
-        .frame(width: 372, height: 548)
+        .frame(width: 372, height: 500)
         .background(.regularMaterial)
         .onAppear {
             model.refreshUsageSummary()
-        }
-    }
-
-    private var header: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "waveform.circle.fill")
-                .font(.system(size: 28, weight: .semibold))
-                .foregroundStyle(model.isRecording ? .red : Color.accentColor)
-            VStack(alignment: .leading, spacing: 2) {
-                Text("WhisperBar")
-                    .font(.headline)
-                Text(model.statusText)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-            }
-            Spacer()
         }
     }
 
@@ -262,19 +243,29 @@ struct SettingsView: View {
 
 private struct UsageBarChart: View {
     var buckets: [UsageBucket]
+    @State private var hoveredIndex: Int?
 
     private var maxSeconds: Double {
         max(1, buckets.map(\.durationSeconds).max() ?? 0)
     }
 
+    private var hoveredBucket: UsageBucket? {
+        guard let hoveredIndex, buckets.indices.contains(hoveredIndex) else { return nil }
+        return buckets[hoveredIndex]
+    }
+
     var body: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 5) {
             HStack(alignment: .bottom, spacing: 3) {
-                ForEach(Array(buckets.enumerated()), id: \.offset) { _, bucket in
+                ForEach(Array(buckets.enumerated()), id: \.offset) { index, bucket in
                     RoundedRectangle(cornerRadius: 2, style: .continuous)
-                        .fill(bucket.durationSeconds > 0 ? Color.accentColor : Color.secondary.opacity(0.18))
+                        .fill(barColor(bucket: bucket, index: index))
                         .frame(height: max(4, 38 * bucket.durationSeconds / maxSeconds))
                         .frame(maxWidth: .infinity)
+                        .contentShape(Rectangle())
+                        .onHover { isHovering in
+                            hoveredIndex = isHovering ? index : (hoveredIndex == index ? nil : hoveredIndex)
+                        }
                 }
             }
             HStack(spacing: 3) {
@@ -286,6 +277,38 @@ private struct UsageBarChart: View {
                 }
             }
             .frame(height: 10)
+
+            Text(hoverText)
+                .font(.caption2)
+                .foregroundStyle(hoveredBucket == nil ? .tertiary : .secondary)
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
+    }
+
+    private var hoverText: String {
+        guard let hoveredBucket else {
+            return "Hover a bar for details"
+        }
+        let label = hoveredBucket.label.isEmpty ? "Bucket" : hoveredBucket.label
+        return "\(label) · \(minutesString(hoveredBucket.durationSeconds)) min · \(costString(hoveredBucket.durationSeconds / 60 * AppConstants.realtimeWhisperUSDPerMinute))"
+    }
+
+    private func barColor(bucket: UsageBucket, index: Int) -> Color {
+        guard bucket.durationSeconds > 0 else {
+            return hoveredIndex == index ? Color.secondary.opacity(0.32) : Color.secondary.opacity(0.18)
+        }
+        return hoveredIndex == index ? Color.accentColor : Color.accentColor.opacity(0.74)
+    }
+
+    private func minutesString(_ seconds: Double) -> String {
+        String(format: "%.1f", seconds / 60)
+    }
+
+    private func costString(_ cost: Double) -> String {
+        if cost < 0.01 {
+            return String(format: "$%.4f", cost)
+        }
+        return String(format: "$%.2f", cost)
     }
 }
