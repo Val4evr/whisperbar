@@ -2,12 +2,12 @@ import SwiftUI
 import WhisperBarCore
 
 struct SettingsView: View {
+    static let contentWidth: CGFloat = 372
+
     @ObservedObject var model: AppModel
     private let controlHeight: CGFloat = 34
     private let actionButtonWidth: CGFloat = 72
     private let iconButtonWidth: CGFloat = 42
-    private let contentWidth: CGFloat = 372
-    private let contentHeight: CGFloat = 528
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -23,7 +23,8 @@ struct SettingsView: View {
             errorSection
         }
         .padding(22)
-        .frame(width: contentWidth, height: contentHeight, alignment: .topLeading)
+        .frame(width: Self.contentWidth, alignment: .topLeading)
+        .fixedSize(horizontal: false, vertical: true)
         .background(.regularMaterial)
         .onAppear {
             model.refreshUsageSummary()
