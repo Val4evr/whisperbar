@@ -7,7 +7,7 @@ struct SettingsView: View {
     private let actionButtonWidth: CGFloat = 72
     private let iconButtonWidth: CGFloat = 42
     private let contentWidth: CGFloat = 372
-    private let contentHeight: CGFloat = 568
+    private let contentHeight: CGFloat = 548
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -49,14 +49,17 @@ struct SettingsView: View {
     }
 
     private func metricCard(_ title: String, value: String) -> some View {
-        VStack(spacing: 7) {
+        VStack(spacing: 6) {
             Text(title)
-                .font(.caption2)
+                .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
+            RoundedRectangle(cornerRadius: 0.5, style: .continuous)
+                .fill(Color.secondary.opacity(0.26))
+                .frame(width: 24, height: 1)
             Text(value)
-                .font(.system(.callout, design: .rounded).weight(.semibold))
+                .font(.system(.title3, design: .rounded).weight(.semibold))
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
         }
