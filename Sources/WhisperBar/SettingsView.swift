@@ -5,17 +5,24 @@ struct SettingsView: View {
     @ObservedObject var model: AppModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 16) {
             header
+            Divider()
             usageSection
+            Divider()
             apiSection
+            Divider()
             permissionsSection
+            Divider()
             hotKeySection
+            Divider()
             launchSection
             errorSection
         }
-        .padding(18)
-        .frame(width: 372, height: 468)
+        .padding(.horizontal, 22)
+        .padding(.top, 24)
+        .padding(.bottom, 26)
+        .frame(width: 372, height: 548)
         .background(.regularMaterial)
         .onAppear {
             model.refreshUsageSummary()
@@ -92,28 +99,26 @@ struct SettingsView: View {
             Label("OpenAI API Key", systemImage: "key.fill")
                 .font(.subheadline.weight(.semibold))
             HStack {
-                Text(model.apiKeySummary)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Button("Remove", role: .destructive) {
-                    model.deleteAPIKey()
+                TextField(apiKeyPlaceholder, text: $model.apiKeyDraft)
+                    .textFieldStyle(.roundedBorder)
+                    .textContentType(.password)
+                    .disableAutocorrection(true)
+                    .onSubmit {
+                        model.saveAPIKey()
+                    }
+
+                if model.apiKeyDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, model.hasAPIKey {
+                    Button("Remove", role: .destructive) {
+                        model.deleteAPIKey()
+                    }
+                    .controlSize(.small)
+                } else {
+                    Button("Save Key") {
+                        model.saveAPIKey()
+                    }
+                    .controlSize(.small)
+                    .disabled(model.apiKeyDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
-                .disabled(!model.hasAPIKey)
-            }
-            TextField("sk-...", text: $model.apiKeyDraft)
-                .textFieldStyle(.roundedBorder)
-                .textContentType(.password)
-                .disableAutocorrection(true)
-                .onSubmit {
-                    model.saveAPIKey()
-                }
-            HStack {
-                Spacer()
-                Button("Save Key") {
-                    model.saveAPIKey()
-                }
-                .disabled(model.apiKeyDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
         }
     }
@@ -136,9 +141,11 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 1) {
                 Text(title)
                     .font(.caption.weight(.medium))
-                Text(status)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+                if status != "Allowed" {
+                    Text(status)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
             }
             Spacer()
             if status == "Allowed" {
@@ -175,9 +182,6 @@ struct SettingsView: View {
                 .controlSize(.small)
                 .help("Reset hotkey")
             }
-            Text(model.hotKeyStatusText)
-                .font(.caption2)
-                .foregroundStyle(model.hotKeyStatusText == "Active" ? .green : .secondary)
             .background(HotKeyCaptureView(isRecording: $model.isRecordingHotKey) { hotKey in
                 model.setHotKey(hotKey)
                 model.isRecordingHotKey = false
@@ -225,6 +229,10 @@ struct SettingsView: View {
             return String(format: "$%.4f", cost)
         }
         return String(format: "$%.2f", cost)
+    }
+
+    private var apiKeyPlaceholder: String {
+        model.apiKeyInputPlaceholder
     }
 }
 

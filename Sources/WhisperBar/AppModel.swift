@@ -51,6 +51,10 @@ final class AppModel: ObservableObject {
         hasSavedAPIKey
     }
 
+    var apiKeyInputPlaceholder: String {
+        hasSavedAPIKey ? apiKeySummary : "sk-..."
+    }
+
     var microphoneStatusText: String {
         switch AVCaptureDevice.authorizationStatus(for: .audio) {
         case .authorized: return "Allowed"
@@ -92,6 +96,7 @@ final class AppModel: ObservableObject {
     func deleteAPIKey() {
         do {
             try keychainStore.deleteAPIKey()
+            apiKeyDraft = ""
             clearAPIKeyMetadata()
         } catch {
             lastError = error.localizedDescription
