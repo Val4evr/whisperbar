@@ -7,7 +7,7 @@ struct SettingsView: View {
     private let actionButtonWidth: CGFloat = 72
     private let iconButtonWidth: CGFloat = 42
     private let contentWidth: CGFloat = 372
-    private let contentHeight: CGFloat = 548
+    private let contentHeight: CGFloat = 528
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
