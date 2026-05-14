@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.3 - 2026-05-14
+
+Packaging polish.
+
+- Package the DMG with a small drag-to-Applications Finder window.
+- Replace the cropped contact-sheet app icon with a centered generated icon asset.
+
 ## 0.1.1 - 2026-05-14
 
 Release polish.
