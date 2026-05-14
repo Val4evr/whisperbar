@@ -3,6 +3,9 @@ import WhisperBarCore
 
 struct SettingsView: View {
     @ObservedObject var model: AppModel
+    private let controlHeight: CGFloat = 32
+    private let actionButtonWidth: CGFloat = 68
+    private let iconButtonWidth: CGFloat = 42
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -18,9 +21,9 @@ struct SettingsView: View {
             errorSection
         }
         .padding(.horizontal, 22)
-        .padding(.top, 24)
-        .padding(.bottom, 26)
-        .frame(width: 372, height: 500)
+        .padding(.top, 34)
+        .padding(.bottom, 34)
+        .frame(width: 372, height: 516)
         .background(.regularMaterial)
         .onAppear {
             model.refreshUsageSummary()
@@ -82,11 +85,13 @@ struct SettingsView: View {
                         model.beginAPIKeyRemoval()
                     }
                     .controlSize(.small)
+                    .frame(width: actionButtonWidth, height: controlHeight)
                 } else {
                     Button("Save Key") {
                         model.saveAPIKey()
                     }
                     .controlSize(.small)
+                    .frame(width: actionButtonWidth, height: controlHeight)
                     .disabled(model.apiKeyDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
@@ -100,7 +105,7 @@ struct SettingsView: View {
                 .font(.system(.body, design: .rounded).weight(.medium))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
-                .frame(maxWidth: .infinity, minHeight: 28, alignment: .leading)
+                .frame(maxWidth: .infinity, minHeight: controlHeight, alignment: .leading)
                 .padding(.horizontal, 8)
                 .background(.quaternary, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
                 .help("API key saved")
@@ -109,6 +114,7 @@ struct SettingsView: View {
                 .textFieldStyle(.roundedBorder)
                 .textContentType(.password)
                 .disableAutocorrection(true)
+                .frame(height: controlHeight)
                 .onSubmit {
                     model.saveAPIKey()
                 }
@@ -157,19 +163,21 @@ struct SettingsView: View {
                 Text(model.hotKey.displayName)
                     .font(.system(.caption, design: .rounded).weight(.medium))
                     .padding(.horizontal, 8)
-                    .padding(.vertical, 5)
+                    .frame(height: controlHeight)
                     .background(.quaternary, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
                 Spacer()
                 Button(model.isRecordingHotKey ? "Press keys..." : "Record") {
                     model.isRecordingHotKey.toggle()
                 }
                 .controlSize(.small)
+                .frame(width: actionButtonWidth, height: controlHeight)
                 Button {
                     model.setHotKey(.defaultToggle)
                 } label: {
                     Image(systemName: "arrow.counterclockwise")
                 }
                 .controlSize(.small)
+                .frame(width: iconButtonWidth, height: controlHeight)
                 .help("Reset hotkey")
             }
             .background(HotKeyCaptureView(isRecording: $model.isRecordingHotKey) { hotKey in
