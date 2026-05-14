@@ -140,8 +140,8 @@ struct SettingsView: View {
             }
             Spacer()
             if status == "Allowed" {
-                Label("Allowed", systemImage: "checkmark.circle.fill")
-                    .font(.caption.weight(.medium))
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(.green)
             } else {
                 Button("Allow", action: action)
