@@ -52,6 +52,10 @@ final class AppModel: ObservableObject {
         hasSavedAPIKey
     }
 
+    var hasUsage: Bool {
+        usageSummary.durationSeconds > 0
+    }
+
     var apiKeyInputPlaceholder: String {
         hasSavedAPIKey ? apiKeySummary : "sk-..."
     }
@@ -76,6 +80,10 @@ final class AppModel: ObservableObject {
 
     var hasRequiredPermissions: Bool {
         microphoneStatusText == "Allowed" && accessibilityStatusText == "Allowed"
+    }
+
+    var hasConfiguredHotKey: Bool {
+        !hotKey.displayName.isEmpty
     }
 
     func readAPIKey() throws -> String? {

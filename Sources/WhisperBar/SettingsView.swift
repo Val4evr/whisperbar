@@ -30,8 +30,7 @@ struct SettingsView: View {
     private var usageSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Label("Cost", systemImage: "chart.bar.fill")
-                    .font(.subheadline.weight(.semibold))
+                sectionTitle("Cost", systemImage: "chart.bar.fill", isHealthy: model.hasUsage)
                 Spacer()
                 Picker("Range", selection: $model.selectedUsagePeriod) {
                     ForEach(UsagePeriod.allCases) { period in
@@ -74,8 +73,7 @@ struct SettingsView: View {
 
     private var apiSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Label("OpenAI API Key", systemImage: "key.fill")
-                .font(.subheadline.weight(.semibold))
+            sectionTitle("OpenAI API Key", systemImage: "key.fill", isHealthy: model.hasAPIKey)
             HStack {
                 apiKeyField
 
@@ -105,10 +103,6 @@ struct SettingsView: View {
                 .frame(maxWidth: .infinity, minHeight: 28, alignment: .leading)
                 .padding(.horizontal, 8)
                 .background(.quaternary, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .strokeBorder(.green.opacity(0.72), lineWidth: 1)
-                }
                 .help("API key saved")
         } else {
             TextField(apiKeyPlaceholder, text: $model.apiKeyDraft)
@@ -123,12 +117,7 @@ struct SettingsView: View {
 
     private var permissionsSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
-                Image(systemName: "checkmark.shield.fill")
-                    .foregroundStyle(model.hasRequiredPermissions ? .green : .primary)
-                Text("Permissions")
-            }
-            .font(.subheadline.weight(.semibold))
+            sectionTitle("Permissions", systemImage: "checkmark.shield.fill", isHealthy: model.hasRequiredPermissions)
             permissionRow(title: "Microphone", status: model.microphoneStatusText) {
                 model.requestMicrophonePermission()
             }
@@ -163,8 +152,7 @@ struct SettingsView: View {
 
     private var hotKeySection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Label("Hotkey", systemImage: "keyboard")
-                .font(.subheadline.weight(.semibold))
+            sectionTitle("Hotkey", systemImage: "keyboard", isHealthy: model.hasConfiguredHotKey)
             HStack {
                 Text(model.hotKey.displayName)
                     .font(.system(.caption, design: .rounded).weight(.medium))
@@ -193,8 +181,7 @@ struct SettingsView: View {
 
     private var launchSection: some View {
         HStack {
-            Label("Launch at Login", systemImage: "power")
-                .font(.subheadline.weight(.semibold))
+            sectionTitle("Launch at Login", systemImage: "power", isHealthy: model.isLaunchAtLoginEnabled)
             Spacer()
             Toggle("", isOn: Binding(
                 get: { model.isLaunchAtLoginEnabled },
@@ -235,6 +222,18 @@ struct SettingsView: View {
 
     private var apiKeyPlaceholder: String {
         model.apiKeyInputPlaceholder
+    }
+
+    private func sectionTitle(_ title: String, systemImage: String, isHealthy: Bool) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: systemImage)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(isHealthy ? .green : .red)
+                .frame(width: 18, height: 18)
+            Text(title)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.primary)
+        }
     }
 }
 
