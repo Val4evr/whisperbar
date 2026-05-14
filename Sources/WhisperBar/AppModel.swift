@@ -9,6 +9,7 @@ final class AppModel: ObservableObject {
     @Published var isRecording = false
     @Published var statusText = "Ready"
     @Published var liveTranscript = ""
+    @Published var hasUserEditedTranscript = false
     @Published var audioLevel: Double = 0
     @Published var lastError: String?
     @Published var apiKeyDraft = ""
@@ -113,6 +114,11 @@ final class AppModel: ObservableObject {
         self.hotKey = hotKey
         hotKeyStore.save(hotKey)
         hotKeyMonitor?.update(hotKey: hotKey)
+    }
+
+    func updateTranscriptFromUser(_ text: String) {
+        liveTranscript = text
+        hasUserEditedTranscript = true
     }
 
     func requestMicrophonePermission() {
