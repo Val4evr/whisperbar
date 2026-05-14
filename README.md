@@ -24,11 +24,11 @@ open -a /Applications/WhisperBar.app
 
 Then add your own OpenAI API key, choose a hotkey, and grant Microphone/Accessibility permissions to `/Applications/WhisperBar.app`.
 
-WhisperBar is a menu bar app. It will not appear in the Dock, and that is intentional. Look for the waveform icon in the menu bar after launching it.
+> [!NOTE]
+> WhisperBar is menu-bar-only and will not appear in the Dock.
 
 ## Functionality
 
-- Lives only in the macOS menu bar. It does not show a Dock icon.
 - Streams microphone audio to OpenAI Realtime transcription with `gpt-realtime-whisper`.
 - Shows a floating, draggable, non-activating dictation pill while recording/finalizing.
 - Displays live transcript deltas while speaking.
@@ -42,21 +42,6 @@ WhisperBar is a menu bar app. It will not appear in the Dock, and that is intent
 - Stores the OpenAI API key locally in a user-only app support file.
 - Tracks local usage by dictation duration and estimates cost for day/week/month.
 - Supports launch at login.
-
-## Menu Bar Panel
-
-The menu bar panel is the only configuration UI:
-
-- **Cost**: local usage estimate for day, week, or month, with a small bar chart. Hover bars to inspect bucket-level hour/day, estimated audio tokens, minutes, and cost.
-- **OpenAI API Key**: saved keys are shown as a redacted read-only field. Click `Remove` to clear the saved key and enter a replacement.
-- **Permissions**: microphone and Accessibility status.
-- **Hotkey**: current global shortcut, a `Change` button to capture a shortcut, and a reset button that fills in `Control + Option + Space`.
-- **Launch at Login**: macOS login item toggle. It is off by default.
-
-Section icons use status color:
-
-- Green means configured/available/enabled.
-- Red means missing, empty, or disabled.
 
 ## Hotkey
 
