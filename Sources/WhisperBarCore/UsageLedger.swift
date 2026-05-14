@@ -113,8 +113,9 @@ public struct UsageSummary: Equatable, Sendable {
                 let seconds = entries
                     .filter { calendar.isDate($0.startedAt, inSameDayAs: date) }
                     .reduce(0) { $0 + $1.durationSeconds }
-                let label = calendar.shortWeekdaySymbols[calendar.component(.weekday, from: date) - 1]
-                return UsageBucket(label: String(label.prefix(1)), detailLabel: label, durationSeconds: seconds)
+                let weekday = calendar.shortWeekdaySymbols[calendar.component(.weekday, from: date) - 1]
+                let day = calendar.component(.day, from: date)
+                return UsageBucket(label: String(weekday.prefix(1)), detailLabel: "\(weekday) \(day)", durationSeconds: seconds)
             }
         case .month:
             return (0..<30).map { offset in
@@ -123,7 +124,8 @@ public struct UsageSummary: Equatable, Sendable {
                     .filter { calendar.isDate($0.startedAt, inSameDayAs: date) }
                     .reduce(0) { $0 + $1.durationSeconds }
                 let day = calendar.component(.day, from: date)
-                return UsageBucket(label: offset % 7 == 0 ? "\(day)" : "", detailLabel: "\(day)", durationSeconds: seconds)
+                let month = calendar.shortMonthSymbols[calendar.component(.month, from: date) - 1]
+                return UsageBucket(label: offset % 7 == 0 ? "\(day)" : "", detailLabel: "\(month) \(day)", durationSeconds: seconds)
             }
         }
     }

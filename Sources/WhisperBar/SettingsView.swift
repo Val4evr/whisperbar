@@ -254,6 +254,12 @@ private struct UsageBarChart: View {
 
     var body: some View {
         VStack(spacing: 5) {
+            Text(hoverText)
+                .font(.caption2)
+                .foregroundStyle(hoveredBucket == nil ? .clear : .secondary)
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
             HStack(alignment: .bottom, spacing: 3) {
                 ForEach(Array(buckets.enumerated()), id: \.offset) { index, bucket in
                     RoundedRectangle(cornerRadius: 2, style: .continuous)
@@ -275,12 +281,6 @@ private struct UsageBarChart: View {
                 }
             }
             .frame(height: 10)
-
-            Text(hoverText)
-                .font(.caption2)
-                .foregroundStyle(hoveredBucket == nil ? .tertiary : .secondary)
-                .lineLimit(1)
-                .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
