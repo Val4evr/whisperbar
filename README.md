@@ -11,8 +11,8 @@ Official install path for now: point a coding agent at [INSTALL.md](INSTALL.md) 
 Short version:
 
 ```sh
-git clone https://github.com/Val4evr/menubar-dictation.git
-cd menubar-dictation
+git clone https://github.com/Val4evr/whisperbar.git
+cd whisperbar
 swift test
 Scripts/build-install.sh
 open -a /Applications/WhisperBar.app
@@ -91,6 +91,10 @@ WhisperBar keeps its state local:
 ```
 
 The API key file is written with user-only permissions (`0600`).
+
+## License
+
+WhisperBar is released under the [MIT License](LICENSE).
 
 ## Cost Accounting
 

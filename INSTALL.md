@@ -24,8 +24,8 @@ If you are an AI coding agent installing WhisperBar for a user, do this end to e
 Commands:
 
 ```sh
-git clone https://github.com/Val4evr/menubar-dictation.git
-cd menubar-dictation
+git clone https://github.com/Val4evr/whisperbar.git
+cd whisperbar
 swift test
 pkill -x WhisperBar || true
 Scripts/build-install.sh
@@ -35,7 +35,7 @@ open -a /Applications/WhisperBar.app
 If the user already has the repository:
 
 ```sh
-cd /path/to/menubar-dictation
+cd /path/to/whisperbar
 git pull
 swift test
 pkill -x WhisperBar || true
@@ -150,7 +150,7 @@ The hotkey is stored in the app's preferences after the user configures it.
 Update from source and reinstall the stable app path:
 
 ```sh
-cd /path/to/menubar-dictation
+cd /path/to/whisperbar
 git pull
 swift test
 pkill -x WhisperBar || true
