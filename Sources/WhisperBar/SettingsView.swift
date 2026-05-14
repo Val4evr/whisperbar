@@ -5,7 +5,7 @@ struct SettingsView: View {
     @ObservedObject var model: AppModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: 14) {
             header
             usageSection
             apiSection
@@ -15,7 +15,7 @@ struct SettingsView: View {
             errorSection
         }
         .padding(18)
-        .frame(width: 372)
+        .frame(width: 372, height: 468)
         .background(.regularMaterial)
         .onAppear {
             model.refreshUsageSummary()

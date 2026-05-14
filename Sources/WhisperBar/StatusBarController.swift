@@ -30,7 +30,7 @@ final class StatusBarController: NSObject {
 
     private func configurePopover() {
         popover.behavior = .transient
-        popover.contentSize = NSSize(width: 372, height: 500)
+        popover.contentSize = NSSize(width: 372, height: 468)
         popover.contentViewController = NSHostingController(rootView: SettingsView(model: model))
     }
 
@@ -41,8 +41,7 @@ final class StatusBarController: NSObject {
         } else {
             model.refreshLaunchAtLogin()
             model.refreshUsageSummary()
-            let anchor = button.bounds.offsetBy(dx: 0, dy: -8)
-            popover.show(relativeTo: anchor, of: button, preferredEdge: .minY)
+            popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
             popover.contentViewController?.view.window?.makeKey()
         }
     }
